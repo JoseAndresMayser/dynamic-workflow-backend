@@ -14,7 +14,6 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.ActionReposito
 import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.RoleActionRepository;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.RoleRepository;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.RoleService;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.ActionDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.RoleRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.RoleWithActionsIdRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.UpdateRoleActionRequestDto;
@@ -53,38 +52,39 @@ public class RoleServiceImpl implements RoleService {
         Role registeredRole = roleRepository.saveAndFlush(role);
         List<Integer> actionsId = request.getActionsId();
         verifyActionsId(actionsId);
-        Integer roleId = registeredRole.getId();
-        List<Action> actions = registerRoleActions(actionsId, roleId);
+        registerRoleActions(actionsId, registeredRole.getId());
+        List<Action> actions = getActionsByIds(actionsId);
         return new RoleActionResponseDto(roleMapper.toDto(registeredRole), actionMapper.toDto(actions));
     }
 
     @Override
-    public RoleResponseDto updateRole(RoleRequestDto request, Integer roleId) throws RoleException {
+    @Transactional(rollbackOn = ActionException.class)
+    public RoleActionResponseDto updateRole(RoleWithActionsIdRequestDto request, Integer roleId) throws RoleException,
+            ActionException {
         Role role = getRoleByRoleId(roleId);
         String roleName = role.getName();
         verifyIfIsMainRole(roleName);
-        String newRoleName = request.getName();
+        RoleRequestDto roleRequest = request.getRole();
+        String newRoleName = roleRequest.getName();
         verifyIfRoleNameIsNull(newRoleName);
         if (!newRoleName.toUpperCase().equals(roleName)) verifyIfRoleAlreadyExists(newRoleName);
         role.setName(newRoleName);
-        role.setDescription(request.getDescription());
+        role.setDescription(roleRequest.getDescription());
         Role updatedRole = roleRepository.saveAndFlush(role);
-        return roleMapper.toDto(updatedRole);
+        List<Integer> newActionsId = new ArrayList<>(request.getActionsId());
+        updateRoleActions(newActionsId, role.getId());
+        List<Action> actions = getActionsByIds(request.getActionsId());
+        return new RoleActionResponseDto(roleMapper.toDto(updatedRole), actionMapper.toDto(actions));
     }
 
     @Override
     public RoleActionResponseDto updateRoleActions(UpdateRoleActionRequestDto request, Integer roleId)
             throws RoleException, ActionException {
         Role role = getRoleByRoleId(roleId);
-        List<Integer> newActionsId = request.getActionsId();
-        verifyActionsId(newActionsId);
-        List<RoleAction> roleCurrentActions = internalGetRoleActionsByRoleId(role.getId());
-        List<RoleAction> roleActionsToDelete = roleCurrentActions
-                .stream()
-                .filter(roleAction -> !newActionsId.remove(roleAction.getActionId()))
-                .collect(Collectors.toList());
-        roleActionRepository.deleteAll(roleActionsToDelete);
-        List<Action> actions = registerRoleActions(newActionsId, role.getId());
+        verifyIfIsMainRole(role.getName());
+        List<Integer> newActionsId = new ArrayList<>(request.getActionsId());
+        updateRoleActions(newActionsId, role.getId());
+        List<Action> actions = getActionsByIds(request.getActionsId());
         return new RoleActionResponseDto(roleMapper.toDto(role), actionMapper.toDto(actions));
     }
 
@@ -101,7 +101,9 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public RoleActionResponseDto getRoleActionsByRoleId(Integer roleId) throws RoleException {
         Role role = getRoleByRoleId(roleId);
-        return new RoleActionResponseDto(roleMapper.toDto(role), getRoleActions(role.getId()));
+        List<RoleAction> roleActions = internalGetRoleActionsByRoleId(roleId);
+        List<Action> actions = roleActions.stream().map(RoleAction::getAction).collect(Collectors.toList());
+        return new RoleActionResponseDto(roleMapper.toDto(role), actionMapper.toDto(actions));
     }
 
     private void verifyRoleName(String roleName) throws RoleException {
@@ -123,7 +125,7 @@ public class RoleServiceImpl implements RoleService {
     private void verifyActionsId(List<Integer> actionsId) throws ActionException {
         if (actionsId == null) throw new InvalidActionsIdListException("La lista de ID de acciones no debe ser nula.");
         if (actionsId.isEmpty())
-            throw new InvalidActionsIdListException("La lista de ID de acciones debe contener al menos un ID.");
+            throw new InvalidActionsIdListException("La lista de ID de acciones debe contener al menos un elemento.");
         verifyActionsIdWithoutAuthentication(actionsId);
     }
 
@@ -132,9 +134,8 @@ public class RoleServiceImpl implements RoleService {
         for (ActionCode actionCode : actionsCodeWithoutAuthentication) {
             Action action = actionRepository.getActionByCode(actionCode)
                     .orElseThrow(() -> new ActionNotFoundException(
-                                    String.format("No se pudo encontrar la Acción con code: %s", actionCode.name())
-                            )
-                    );
+                            String.format("No se pudo encontrar la Acción con code: %s", actionCode.name())
+                    ));
             Integer actionId = action.getId();
             if (actionsId.contains(actionId))
                 throw new ActionWithoutAuthException(
@@ -147,44 +148,49 @@ public class RoleServiceImpl implements RoleService {
         }
     }
 
-    private List<Action> registerRoleActions(List<Integer> actionsId, Integer roleId) throws ActionException {
+    private void registerRoleActions(List<Integer> actionsId, Integer roleId) throws ActionException {
         List<RoleAction> roleActions = new ArrayList<>();
-        List<Action> actions = new ArrayList<>();
         for (Integer actionId : actionsId) {
             Action action = actionRepository.findById(actionId)
-                    .orElseThrow(() ->
-                            new ActionNotFoundException(
-                                    String.format("No se pudo encontrar la Acción con Id: %d", actionId)
-                            )
-                    );
+                    .orElseThrow(() -> new ActionNotFoundException(
+                            String.format("No se pudo encontrar la Acción con Id: %d", actionId)
+                    ));
             RoleAction newRoleAction = new RoleAction();
             newRoleAction.setRoleId(roleId);
             newRoleAction.setActionId(action.getId());
             roleActions.add(newRoleAction);
-            actions.add(action);
         }
         roleActionRepository.saveAll(roleActions);
-        return actions;
     }
 
-    private List<ActionDto> getRoleActions(Integer roleId) {
-        List<RoleAction> roleActions = roleActionRepository.getAllByRoleId(roleId);
-        List<Action> actions = roleActions.stream().map(RoleAction::getAction).collect(Collectors.toList());
-        return actionMapper.toDto(actions);
+    private List<Action> getActionsByIds(List<Integer> actionsId) {
+        return actionRepository.findAllById(actionsId);
+    }
+
+    private void verifyIfIsMainRole(String roleName) throws UpdateMainRoleException {
+        try {
+            MainRole.valueOf(roleName);
+            throw new UpdateMainRoleException();
+        } catch (IllegalArgumentException ignored) {
+        }
+    }
+
+    private void updateRoleActions(List<Integer> newActionsId, Integer roleId) throws ActionException {
+        verifyActionsId(newActionsId);
+        List<RoleAction> roleCurrentActions = internalGetRoleActionsByRoleId(roleId);
+        List<RoleAction> roleActionsToDelete = roleCurrentActions
+                .stream()
+                .filter(roleAction -> !newActionsId.remove(roleAction.getActionId()))
+                .collect(Collectors.toList());
+        roleActionRepository.deleteAll(roleActionsToDelete);
+        registerRoleActions(newActionsId, roleId);
     }
 
     private Role getRoleByRoleId(Integer roleId) throws RoleNotFoundException {
         return roleRepository.findById(roleId)
                 .orElseThrow(() -> new RoleNotFoundException(
-                                String.format("No se pudo encontrar un Rol con ID: %d", roleId)
-                        )
-                );
-    }
-
-    private void verifyIfIsMainRole(String roleName) throws UpdateMainRoleException {
-        MainRole[] mainRoles = MainRole.values();
-        for (MainRole mainRole : mainRoles)
-            if (roleName.equals(mainRole.name())) throw new UpdateMainRoleException();
+                        String.format("No se pudo encontrar el Rol con ID: %d", roleId)
+                ));
     }
 
     private List<RoleAction> internalGetRoleActionsByRoleId(Integer roleId) {
