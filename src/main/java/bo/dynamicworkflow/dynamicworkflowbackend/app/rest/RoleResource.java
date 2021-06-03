@@ -3,7 +3,6 @@ package bo.dynamicworkflow.dynamicworkflowbackend.app.rest;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.ActionException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.role.RoleException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.RoleService;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.RoleRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.RoleWithActionsIdRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.UpdateRoleActionRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.GeneralResponse;
@@ -29,9 +28,9 @@ public class RoleResource {
     }
 
     @PostMapping("/{roleId}/update")
-    public GeneralResponse updateRole(@RequestBody RoleRequestDto request, @PathVariable("roleId") Integer roleId)
-            throws RoleException {
-        RoleResponseDto response = roleService.updateRole(request, roleId);
+    public GeneralResponse updateRole(@RequestBody RoleWithActionsIdRequestDto request,
+                                      @PathVariable("roleId") Integer roleId) throws RoleException, ActionException {
+        RoleActionResponseDto response = roleService.updateRole(request, roleId);
         return new GeneralResponse(true, response, "Rol actualizado exitosamente.");
     }
 

@@ -2,7 +2,6 @@ package bo.dynamicworkflow.dynamicworkflowbackend.app.services;
 
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.ActionException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.role.RoleException;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.RoleRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.RoleWithActionsIdRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.UpdateRoleActionRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.RoleActionResponseDto;
@@ -14,7 +13,8 @@ public interface RoleService {
 
     RoleActionResponseDto registerRole(RoleWithActionsIdRequestDto request) throws RoleException, ActionException;
 
-    RoleResponseDto updateRole(RoleRequestDto request, Integer roleId) throws RoleException;
+    RoleActionResponseDto updateRole(RoleWithActionsIdRequestDto request, Integer roleId) throws RoleException,
+            ActionException;
 
     RoleActionResponseDto updateRoleActions(UpdateRoleActionRequestDto request, Integer roleId) throws RoleException,
             ActionException;
