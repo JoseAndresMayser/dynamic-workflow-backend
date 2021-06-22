@@ -10,6 +10,6 @@ import java.util.Optional;
 @Repository
 public interface ActionRepository extends JpaRepository<Action, Integer> {
 
-    Optional<Action> getActionByCode(ActionCode code);
+    Optional<Action> findByCode(ActionCode code);
 
 }

@@ -21,7 +21,6 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.Role
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.RoleResponseDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.ActionMapper;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.RoleMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -32,15 +31,19 @@ import java.util.stream.Collectors;
 @Service
 public class RoleServiceImpl implements RoleService {
 
-    @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
-    private ActionRepository actionRepository;
-    @Autowired
-    private RoleActionRepository roleActionRepository;
+    private final RoleRepository roleRepository;
+    private final ActionRepository actionRepository;
+    private final RoleActionRepository roleActionRepository;
 
     private final RoleMapper roleMapper = new RoleMapper();
     private final ActionMapper actionMapper = new ActionMapper();
+
+    public RoleServiceImpl(RoleRepository roleRepository, ActionRepository actionRepository,
+                           RoleActionRepository roleActionRepository) {
+        this.roleRepository = roleRepository;
+        this.actionRepository = actionRepository;
+        this.roleActionRepository = roleActionRepository;
+    }
 
     @Override
     @Transactional(rollbackOn = ActionException.class)
@@ -130,9 +133,9 @@ public class RoleServiceImpl implements RoleService {
     }
 
     private void verifyActionsIdWithoutAuthentication(List<Integer> actionsId) throws ActionException {
-        List<ActionCode> actionsCodeWithoutAuthentication = ActionCode.getActionsCodeWithoutAuthentication();
+        List<ActionCode> actionsCodeWithoutAuthentication = ActionCode.getActionsCodeWithoutAuth();
         for (ActionCode actionCode : actionsCodeWithoutAuthentication) {
-            Action action = actionRepository.getActionByCode(actionCode)
+            Action action = actionRepository.findByCode(actionCode)
                     .orElseThrow(() -> new ActionNotFoundException(
                             String.format("No se pudo encontrar la Acción con code: %s", actionCode.name())
                     ));
@@ -148,7 +151,7 @@ public class RoleServiceImpl implements RoleService {
         }
     }
 
-    private void registerRoleActions(List<Integer> actionsId, Integer roleId) throws ActionException {
+    private void registerRoleActions(List<Integer> actionsId, Integer roleId) throws ActionNotFoundException {
         List<RoleAction> roleActions = new ArrayList<>();
         for (Integer actionId : actionsId) {
             Action action = actionRepository.findById(actionId)
