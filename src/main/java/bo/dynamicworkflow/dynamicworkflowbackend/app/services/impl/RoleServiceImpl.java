@@ -109,6 +109,12 @@ public class RoleServiceImpl implements RoleService {
         return new RoleActionResponseDto(roleMapper.toDto(role), actionMapper.toDto(actions));
     }
 
+    @Override
+    public void deleteRole(Integer roleId) throws RoleNotFoundException {
+        Role role = getRoleByRoleId(roleId);
+        roleRepository.delete(role);
+    }
+
     private void verifyRoleName(String roleName) throws RoleException {
         verifyIfRoleNameIsNull(roleName);
         verifyIfRoleAlreadyExists(roleName);

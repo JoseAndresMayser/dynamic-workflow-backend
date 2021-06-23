@@ -3,6 +3,7 @@ package bo.dynamicworkflow.dynamicworkflowbackend.app.rest;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.access.annotations.ResourceAction;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.ActionException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.role.RoleException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.role.RoleNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.enums.ActionCode;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.RoleService;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.RoleWithActionsIdRequestDto;
@@ -69,6 +70,13 @@ public class RoleController {
     public GeneralResponse getRoleActionsByRoleId(@PathVariable("roleId") Integer roleId) throws RoleException {
         RoleActionResponseDto response = roleService.getRoleActionsByRoleId(roleId);
         return new GeneralResponse(true, response, "Acciones del rol obtenidas exitosamente.");
+    }
+
+    @DeleteMapping("/{roleId}")
+    @ResourceAction(actionCode = ActionCode.ROLE_DELETE)
+    public GeneralResponse deleteRole(@PathVariable("roleId") Integer roleId) throws RoleNotFoundException {
+        roleService.deleteRole(roleId);
+        return new GeneralResponse(true, null, "Rol eliminado exitosamente.");
     }
 
 }
