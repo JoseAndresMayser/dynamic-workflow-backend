@@ -14,6 +14,9 @@ public enum ActionCode {
     ROLE_GET,
     ROLE_GET_ALL,
     ROLE_ACTIONS_GET,
+    ROLE_DELETE,
+
+    ACTION_GET_ALL,
 
     USER_REGISTER_REQUESTING,
     USER_REGISTER,
