@@ -1,7 +1,7 @@
 package bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class BaseMapper<RequestDto, ResponseDto, Entity> {
 
@@ -10,19 +10,11 @@ public abstract class BaseMapper<RequestDto, ResponseDto, Entity> {
     public abstract ResponseDto toDto(Entity entity);
 
     public List<Entity> toEntity(List<RequestDto> requests) {
-        List<Entity> entities = new ArrayList<>();
-        for (RequestDto request : requests) {
-            entities.add(toEntity(request));
-        }
-        return entities;
+        return requests.stream().map(this::toEntity).collect(Collectors.toList());
     }
 
     public List<ResponseDto> toDto(List<Entity> entities) {
-        List<ResponseDto> responses = new ArrayList<>();
-        for (Entity entity : entities) {
-            responses.add(toDto(entity));
-        }
-        return responses;
+        return entities.stream().map(this::toDto).collect(Collectors.toList());
     }
 
 }
