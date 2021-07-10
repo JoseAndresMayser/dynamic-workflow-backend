@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/access")
+@RequestMapping("/rest/access")
 public class AccessController {
 
     private final AccessService accessService;
