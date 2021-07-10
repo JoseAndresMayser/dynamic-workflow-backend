@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/actions")
+@RequestMapping("/rest/actions")
 public class ActionController {
 
     private final ActionService actionService;

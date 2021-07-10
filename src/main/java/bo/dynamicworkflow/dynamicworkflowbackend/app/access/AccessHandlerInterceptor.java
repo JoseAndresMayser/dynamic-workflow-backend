@@ -8,6 +8,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.models.enums.ActionCode;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.ActionRepository;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.UserActionRepository;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.UserAccountDto;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
@@ -24,6 +25,7 @@ public class AccessHandlerInterceptor implements HandlerInterceptor {
     private final UserActionRepository userActionRepository;
     private final ActionRepository actionRepository;
 
+    @Autowired
     public AccessHandlerInterceptor(UserActionRepository userActionRepository, ActionRepository actionRepository) {
         this.userActionRepository = userActionRepository;
         this.actionRepository = actionRepository;
@@ -43,7 +45,7 @@ public class AccessHandlerInterceptor implements HandlerInterceptor {
                     UserAccountDto userAccountDto = SessionHolder.getCurrentUserAccount();
                     if (userAccountDto == null || !hasAccessToTheResource(actionCode, userAccountDto.getId())) {
                         response.getWriter().write("User not authorized to access this resource.");
-                        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                        response.setStatus(HttpStatus.FORBIDDEN.value());
                         return false;
                     }
                 }
