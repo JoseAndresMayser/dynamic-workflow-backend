@@ -28,7 +28,7 @@ public class AccessSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf().disable()
-                .authorizeRequests().antMatchers(SecurityConfig.UNPROTECTED_ENDPOINTS).permitAll()
+                .authorizeRequests().antMatchers(SecurityConfig.FREE_ENDPOINTS).permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .exceptionHandling().authenticationEntryPoint(accessAuthenticationEntryPoint)
