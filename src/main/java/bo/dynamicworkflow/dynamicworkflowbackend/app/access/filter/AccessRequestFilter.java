@@ -2,7 +2,6 @@ package bo.dynamicworkflow.dynamicworkflowbackend.app.access.filter;
 
 import bo.dynamicworkflow.dynamicworkflowbackend.app.access.SessionHolder;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.access.token.TokenManager;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.access.token.exceptions.InvalidTokenException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.configs.SecurityConfig;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.UserService;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.UserAccountDto;
@@ -13,8 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -45,7 +42,7 @@ public class AccessRequestFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String urlEndpoint = request.getRequestURI().replaceFirst("/dynamic-workflow", "");
         if (urlEndpoint.startsWith("/rest")) {
-            List<String> unprotectedEndpoints = Arrays.asList(SecurityConfig.UNPROTECTED_ENDPOINTS);
+            List<String> unprotectedEndpoints = Arrays.asList(SecurityConfig.FREE_ENDPOINTS);
             if (!unprotectedEndpoints.contains(urlEndpoint)) {
                 String token = request.getHeader("Authorization");
                 UserAccountDto account = getAccountFromToken(token);
