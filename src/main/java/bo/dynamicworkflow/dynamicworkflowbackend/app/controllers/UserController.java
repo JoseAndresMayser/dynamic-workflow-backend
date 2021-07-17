@@ -1,4 +1,4 @@
-package bo.dynamicworkflow.dynamicworkflowbackend.app.rest;
+package bo.dynamicworkflow.dynamicworkflowbackend.app.controllers;
 
 import bo.dynamicworkflow.dynamicworkflowbackend.app.access.SessionHolder;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.access.annotations.ResourceAction;
@@ -13,16 +13,18 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.*;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.GeneralResponse;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.UserActionResponseDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.UserResponseDto;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/rest/users")
+@RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
 
+    @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
     }
@@ -32,7 +34,7 @@ public class UserController {
     public GeneralResponse registerRequestingUser(@RequestBody UserRequestDto request) throws UserException,
             InvalidEmailException, InvalidPasswordException, RoleException, ActionException {
         UserResponseDto response = userService.registerRequestingUser(request);
-        return new GeneralResponse(true, response, "Usuario solicitante resgistrado exitosamente.");
+        return new GeneralResponse(true, response, "Usuario resgistrado exitosamente.");
     }
 
     @PostMapping

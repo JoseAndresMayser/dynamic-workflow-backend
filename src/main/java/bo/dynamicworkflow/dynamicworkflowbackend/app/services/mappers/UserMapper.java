@@ -14,7 +14,7 @@ public class UserMapper extends BaseMapper<UserRequestDto, UserResponseDto, User
         user.setFirstSurname(request.getFirstSurname());
         user.setSecondSurname(request.getSecondSurname());
         user.setEmail(request.getEmail());
-        user.setPhoneNumber(request.getPhoneNumber());
+        user.setPhone(request.getPhone());
         user.setCode(request.getCode());
         return user;
     }
@@ -31,7 +31,7 @@ public class UserMapper extends BaseMapper<UserRequestDto, UserResponseDto, User
                 user.getFirstSurname(),
                 user.getSecondSurname(),
                 user.getEmail(),
-                user.getPhoneNumber(),
+                user.getPhone(),
                 user.getCode()
         );
     }

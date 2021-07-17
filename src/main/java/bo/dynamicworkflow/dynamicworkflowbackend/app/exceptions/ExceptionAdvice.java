@@ -7,14 +7,15 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
-public class ResponseException {
+public class ExceptionAdvice {
 
     GeneralResponse response;
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<GeneralResponse> exception(Exception e) {
-        response = new GeneralResponse(false, null, e.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<GeneralResponse> exception(Exception exception) {
+        exception.printStackTrace();
+        response = new GeneralResponse(false, null, exception.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }

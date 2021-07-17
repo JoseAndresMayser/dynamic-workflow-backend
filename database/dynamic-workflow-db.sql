@@ -105,8 +105,8 @@ CREATE TABLE users
 	names varchar(256) NOT NULL,
 	first_surname varchar(256) NOT NULL,
 	second_surname varchar(256),
-	email varchar(256) NOT NULL,
-	phone_number varchar(50) NOT NULL,
+	email varchar(320) NOT NULL,
+	phone varchar(50) NOT NULL,
 	code varchar(50),
 	PRIMARY KEY (id)
 );
@@ -122,7 +122,7 @@ CREATE TABLE user_actions
 );
 
 INSERT INTO users(username, password, status, creation_date, last_modified_date, names, first_surname, second_surname, email, phone_number) 
-VALUES ('admin', '$2a$12$8ORLl44NoA72B3dbotKwXO4kqmNDIGE/wimvuo18s6DLU5SDoscjG', 'ENABLED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'DYNAMIC', 'WORKFLOW', 'ADMINISTRATOR', 'dynamic.workflow.uagrm@gmail.com', '+59112345678');
+VALUES ('admin', '$2a$12$8ORLl44NoA72B3dbotKwXO4kqmNDIGE/wimvuo18s6DLU5SDoscjG', 'ENABLED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'DYNAMIC', 'WORKFLOW', 'ADMINISTRATOR', 'dynamic.workflow.uagrm@gmail.com', '+59178030122');
 
 INSERT INTO user_actions(user_id, action_id) VALUES(1, 3);
 INSERT INTO user_actions(user_id, action_id) VALUES(1, 4);
@@ -139,16 +139,35 @@ INSERT INTO user_actions(user_id, action_id) VALUES(1, 15);
 INSERT INTO user_actions(user_id, action_id) VALUES(1, 16);
 INSERT INTO user_actions(user_id, action_id) VALUES(1, 17);
 
-DROP TABLE IF EXISTS events CASCADE;
 
-CREATE TABLE events
+/* 3 */
+
+DROP TABLE IF EXISTS departments CASCADE;
+
+DROP TABLE IF EXISTS department_members CASCADE;
+
+CREATE TABLE departments
 (
 	id serial NOT NULL,
-	execution_date timestamp NOT NULL,
-	affected_entity_id int,
+	name varchar(256) NOT NULL,
+	contact_email varchar(320) NOT NULL,
+	contact_phone varchar(50) NOT NULL,
+	location varchar(256) NOT NULL,
+	creation_date timestamp NOT NULL,
+	last_modified_date timestamp NOT NULL,
+	status varchar(50) NOT NULL,
+	parent_department_id int,
+	PRIMARY KEY (id),
+	FOREIGN KEY (parent_department_id) REFERENCES departments(id)
+);
+
+CREATE TABLE department_members
+(
+	id serial NOT NULL,
+	is_department_boss boolean NOT NULL,
 	user_id int NOT NULL,
-	action_id int NOT NULL,
+	department_id int NOT NULL,
 	PRIMARY KEY (id),
 	FOREIGN KEY (user_id) REFERENCES users(id),
-	FOREIGN KEY (action_id) REFERENCES actions(id)
+	FOREIGN KEY (department_id) REFERENCES departments(id)
 );

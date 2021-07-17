@@ -40,11 +40,28 @@ public class AccessRequestFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        if (request.getMethod().equals("OPTIONS")) {
+            response.setStatus(HttpStatus.OK.value());
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+            response.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT,DELETE");
+            response.setHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, " +
+                    "Origin,Accept, " +
+                    "X-Requested-With, " +
+                    "Content-Type, " +
+                    "Access-Control-Request-Method, " +
+                    "Access-Control-Request-Headers," +
+                    "access-control-allow-origin," +
+                    "authorization");
+            return;
+        }
+
+
         String urlEndpoint = request.getRequestURI().replaceFirst("/dynamic-workflow", "");
-        if (urlEndpoint.startsWith("/rest")) {
+        if (urlEndpoint.startsWith("/api")) {
             List<String> unprotectedEndpoints = Arrays.asList(SecurityConfig.FREE_ENDPOINTS);
             if (!unprotectedEndpoints.contains(urlEndpoint)) {
-                String token = request.getHeader("Authorization");
+                String token = request.getHeader(AUTHORIZATION_KEY);
                 UserAccountDto account = getAccountFromToken(token);
                 if (account == null || SecurityContextHolder.getContext().getAuthentication() != null) {
                     response.getWriter().write("Unauthorized user.");

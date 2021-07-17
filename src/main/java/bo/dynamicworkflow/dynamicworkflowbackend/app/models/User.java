@@ -40,11 +40,11 @@ public class User {
     @Column(name = "second_surname", length = 256)
     private String secondSurname;
 
-    @Column(name = "email", nullable = false, length = 256)
+    @Column(name = "email", nullable = false, length = 320)
     private String email;
 
-    @Column(name = "phone_number", nullable = false, length = 50)
-    private String phoneNumber;
+    @Column(name = "phone", nullable = false, length = 50)
+    private String phone;
 
     @Column(name = "code", length = 50)
     private String code;
@@ -54,23 +54,15 @@ public class User {
     private void prePersistOrUpdate() {
         names = names.toUpperCase();
         firstSurname = firstSurname.toUpperCase();
-        if (secondSurname != null && secondSurname.equals("")) {
-            secondSurname = null;
-        }
-        if (secondSurname != null) {
-            secondSurname = secondSurname.toUpperCase();
-        }
+        if (secondSurname != null && secondSurname.equals("")) secondSurname = null;
+        if (secondSurname != null) secondSurname = secondSurname.toUpperCase();
         email = email.toLowerCase();
     }
 
     public String fullName() {
         StringBuilder fullName = new StringBuilder(names);
-        if (firstSurname != null) {
-            fullName.append(" ").append(firstSurname);
-        }
-        if (secondSurname != null) {
-            fullName.append(" ").append(secondSurname);
-        }
+        if (firstSurname != null) fullName.append(" ").append(firstSurname);
+        if (secondSurname != null) fullName.append(" ").append(secondSurname);
         return fullName.toString();
     }
 

@@ -1,4 +1,4 @@
-package bo.dynamicworkflow.dynamicworkflowbackend.app.rest;
+package bo.dynamicworkflow.dynamicworkflowbackend.app.controllers;
 
 import bo.dynamicworkflow.dynamicworkflowbackend.app.access.annotations.ResourceAction;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.ActionException;
@@ -17,11 +17,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/rest/roles")
+@RequestMapping("/api/roles")
 public class RoleController {
 
     private final RoleService roleService;
 
+    @Autowired
     public RoleController(RoleService roleService) {
         this.roleService = roleService;
     }

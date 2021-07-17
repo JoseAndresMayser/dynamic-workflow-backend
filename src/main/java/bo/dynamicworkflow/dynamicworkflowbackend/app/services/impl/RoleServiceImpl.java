@@ -125,7 +125,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     private void verifyIfRoleAlreadyExists(String roleName) throws RoleAlreadyExistsException {
-        if (roleRepository.getRoleByName(roleName.toUpperCase()).isPresent())
+        if (roleRepository.findByName(roleName.toUpperCase()).isPresent())
             throw new RoleAlreadyExistsException(
                     String.format("Ya se encuentra registrado un Rol con el nombre: %s", roleName.toUpperCase())
             );

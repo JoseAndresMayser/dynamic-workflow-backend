@@ -68,7 +68,7 @@ public class AccessServiceImpl implements AccessService {
                 userStatus,
                 user.fullName(),
                 user.getEmail(),
-                user.getPhoneNumber(),
+                user.getPhone(),
                 user.getCode(),
                 token,
                 actionMapper.toDto(actions)

@@ -64,7 +64,7 @@ public class UserServiceImpl implements UserService {
     public UserResponseDto registerRequestingUser(UserRequestDto request) throws UserException, InvalidEmailException,
             InvalidPasswordException, RoleException, ActionException {
         User newRequestingUser = createNewUser(request, true);
-        Role role = roleRepository.getRoleByName(MainRole.REQUESTING_USER.name())
+        Role role = roleRepository.findByName(MainRole.REQUESTING_USER.name())
                 .orElseThrow(() -> new RoleNotFoundException("No se pudo encontrar el Rol \"REQUESTING_USER\""));
         List<RoleAction> roleActions = roleActionRepository.getAllByRoleId(role.getId());
         List<Integer> actionsId = roleActions.stream().map(RoleAction::getActionId).collect(Collectors.toList());
@@ -267,7 +267,7 @@ public class UserServiceImpl implements UserService {
     private User getUserByUserId(Integer userId) throws UserNotFoundException {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(
-                        String.format("No se pudo encontrar un Ususario con ID: %d", userId)
+                        String.format("No se pudo encontrar un Usuario con ID: %d", userId)
                 ));
     }
 
@@ -294,7 +294,7 @@ public class UserServiceImpl implements UserService {
         userToUpdate.setFirstSurname(userRequest.getFirstSurname());
         userToUpdate.setSecondSurname(userRequest.getSecondSurname());
         userToUpdate.setEmail(newEmail);
-        userToUpdate.setPhoneNumber(userRequest.getPhoneNumber());
+        userToUpdate.setPhone(userRequest.getPhone());
         userToUpdate.setCode(userRequest.getCode());
 
         return userRepository.saveAndFlush(userToUpdate);

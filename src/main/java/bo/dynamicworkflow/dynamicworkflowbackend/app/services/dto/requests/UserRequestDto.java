@@ -13,7 +13,7 @@ public class UserRequestDto {
     private String firstSurname;
     private String secondSurname;
     private String email;
-    private String phoneNumber;
+    private String phone;
     private String code;
 
 }
