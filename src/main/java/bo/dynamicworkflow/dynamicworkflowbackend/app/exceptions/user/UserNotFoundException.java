@@ -10,4 +10,8 @@ public class UserNotFoundException extends UserException {
         super(message);
     }
 
+    public UserNotFoundException(Integer userId) {
+        super(String.format("No se pudo encontrar un Usuario con ID: %d", userId));
+    }
+
 }

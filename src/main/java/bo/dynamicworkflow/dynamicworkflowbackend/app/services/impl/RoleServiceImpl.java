@@ -15,12 +15,13 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.RoleActionRepo
 import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.RoleRepository;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.RoleService;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.RoleRequestDto;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.RoleWithActionsIdRequestDto;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.CompleteRoleRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.UpdateRoleActionRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.RoleActionResponseDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.RoleResponseDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.ActionMapper;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.RoleMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -38,6 +39,7 @@ public class RoleServiceImpl implements RoleService {
     private final RoleMapper roleMapper = new RoleMapper();
     private final ActionMapper actionMapper = new ActionMapper();
 
+    @Autowired
     public RoleServiceImpl(RoleRepository roleRepository, ActionRepository actionRepository,
                            RoleActionRepository roleActionRepository) {
         this.roleRepository = roleRepository;
@@ -47,7 +49,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional(rollbackOn = ActionException.class)
-    public RoleActionResponseDto registerRole(RoleWithActionsIdRequestDto request) throws RoleException,
+    public RoleActionResponseDto registerRole(CompleteRoleRequestDto request) throws RoleException,
             ActionException {
         RoleRequestDto roleRequest = request.getRole();
         verifyRoleName(roleRequest.getName());
@@ -62,7 +64,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional(rollbackOn = ActionException.class)
-    public RoleActionResponseDto updateRole(RoleWithActionsIdRequestDto request, Integer roleId) throws RoleException,
+    public RoleActionResponseDto updateRole(CompleteRoleRequestDto request, Integer roleId) throws RoleException,
             ActionException {
         Role role = getRoleByRoleId(roleId);
         String roleName = role.getName();
@@ -125,7 +127,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     private void verifyIfRoleAlreadyExists(String roleName) throws RoleAlreadyExistsException {
-        if (roleRepository.getRoleByName(roleName.toUpperCase()).isPresent())
+        if (roleRepository.findByName(roleName.toUpperCase()).isPresent())
             throw new RoleAlreadyExistsException(
                     String.format("Ya se encuentra registrado un Rol con el nombre: %s", roleName.toUpperCase())
             );

@@ -14,7 +14,8 @@ public class UserMapper extends BaseMapper<UserRequestDto, UserResponseDto, User
         user.setFirstSurname(request.getFirstSurname());
         user.setSecondSurname(request.getSecondSurname());
         user.setEmail(request.getEmail());
-        user.setPhoneNumber(request.getPhoneNumber());
+        user.setPhone(request.getPhone());
+        user.setIdentificationNumber(request.getIdentificationNumber());
         user.setCode(request.getCode());
         return user;
     }
@@ -25,13 +26,14 @@ public class UserMapper extends BaseMapper<UserRequestDto, UserResponseDto, User
                 user.getId(),
                 user.getUsername(),
                 user.getStatus(),
-                user.getCreationDate(),
-                user.getLastModifiedDate(),
+                user.getCreationTimestamp(),
+                user.getModificationTimestamp(),
                 user.getNames(),
                 user.getFirstSurname(),
                 user.getSecondSurname(),
                 user.getEmail(),
-                user.getPhoneNumber(),
+                user.getPhone(),
+                user.getIdentificationNumber(),
                 user.getCode()
         );
     }

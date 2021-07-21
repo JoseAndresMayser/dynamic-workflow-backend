@@ -17,10 +17,10 @@ public interface UserService extends UserDetailsService {
     UserResponseDto registerRequestingUser(UserRequestDto request) throws UserException, InvalidEmailException,
             InvalidPasswordException, RoleException, ActionException;
 
-    UserActionResponseDto registerUser(UserWithActionsIdRequestDto request) throws UserException, InvalidEmailException,
+    UserActionResponseDto registerUser(CompleteUserRequestDto request) throws UserException, InvalidEmailException,
             InvalidPasswordException, ActionException;
 
-    UserActionResponseDto updateUser(UserWithActionsIdRequestDto request, Integer userId) throws UserException,
+    UserActionResponseDto updateUser(CompleteUserRequestDto request, Integer userId) throws UserException,
             InvalidEmailException, InvalidPasswordException, ActionException;
 
     UserResponseDto updateCurrentUser(UserRequestDto request) throws UserException, InvalidEmailException,
@@ -29,5 +29,9 @@ public interface UserService extends UserDetailsService {
     UserResponseDto getByUserId(Integer userId) throws UserException;
 
     List<UserResponseDto> getAllUsers();
+
+    List<UserResponseDto> getNonDepartmentBosses();
+
+    List<UserResponseDto> getNonDepartmentMembers();
 
 }

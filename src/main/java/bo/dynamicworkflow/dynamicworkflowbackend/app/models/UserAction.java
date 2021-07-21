@@ -19,12 +19,12 @@ public class UserAction {
     @Column(name = "action_id", nullable = false)
     private Integer actionId;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
     private User user;
 
-    @ManyToOne
-    @JoinColumn(name = "action_id", insertable = false, updatable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "action_id", referencedColumnName = "id", insertable = false, updatable = false)
     private Action action;
 
 }

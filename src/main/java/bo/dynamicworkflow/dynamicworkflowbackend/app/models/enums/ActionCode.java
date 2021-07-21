@@ -24,7 +24,15 @@ public enum ActionCode {
     USER_CURRENT_UPDATE,
     USER_GET,
     USER_CURRENT_GET,
-    USER_GET_ALL;
+    USER_GET_ALL,
+    USER_NON_DEPARTMENT_BOSSES,
+    USER_NON_DEPARTMENT_MEMBERS,
+
+    DEPARTMENT_REGISTER,
+    DEPARTMENT_UPDATE,
+    DEPARTMENT_UPDATE_MEMBERS,
+    DEPARTMENT_GET,
+    DEPARTMENT_GET_ALL;
 
     public static List<ActionCode> getActionsCodeWithoutAuth() {
         return new ArrayList<ActionCode>() {

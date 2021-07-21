@@ -1,10 +1,10 @@
 package bo.dynamicworkflow.dynamicworkflowbackend.app.access.token;
 
-import bo.dynamicworkflow.dynamicworkflowbackend.app.configs.DynamicWorkflowConfig;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.configs.RsaKeyConfig;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.io.*;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -18,19 +18,29 @@ public class RsaKeyManager implements Serializable {
     private PrivateKey privateKey;
     @Getter
     private PublicKey publicKey;
+    private final String privateKeyFilePath;
+    private final String publicKeyFilePath;
 
-    @PostConstruct
+    private static final String ALGORITHM = "RSA";
+
+    @Autowired
+    public RsaKeyManager(RsaKeyConfig rsaKeyConfig) throws Exception {
+        this.privateKeyFilePath = rsaKeyConfig.getPrivateKeyPath();
+        this.publicKeyFilePath = rsaKeyConfig.getPublicKeyPath();
+        initialize();
+    }
+
     private void initialize() throws Exception {
         if (!areKeysPresent()) generateKeys();
-        ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(PRIVATE_KEY_FILE_PATH));
+        ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(privateKeyFilePath));
         privateKey = (PrivateKey) inputStream.readObject();
-        inputStream = new ObjectInputStream(new FileInputStream(PUBLIC_KEY_FILE_PATH));
+        inputStream = new ObjectInputStream(new FileInputStream(publicKeyFilePath));
         publicKey = (PublicKey) inputStream.readObject();
     }
 
     private boolean areKeysPresent() {
-        File privateKey = new File(PRIVATE_KEY_FILE_PATH);
-        File publicKey = new File(PUBLIC_KEY_FILE_PATH);
+        File privateKey = new File(privateKeyFilePath);
+        File publicKey = new File(publicKeyFilePath);
         return privateKey.exists() && publicKey.exists();
     }
 
@@ -40,8 +50,8 @@ public class RsaKeyManager implements Serializable {
             keyPairGenerator.initialize(2048);
             final KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-            File privateKeyFile = new File(PRIVATE_KEY_FILE_PATH);
-            File publicKeyFile = new File(PUBLIC_KEY_FILE_PATH);
+            File privateKeyFile = new File(privateKeyFilePath);
+            File publicKeyFile = new File(publicKeyFilePath);
 
             if (privateKeyFile.getParentFile() != null) privateKeyFile.getParentFile().mkdirs();
             privateKeyFile.createNewFile();
@@ -61,9 +71,5 @@ public class RsaKeyManager implements Serializable {
             e.printStackTrace();
         }
     }
-
-    private static final String ALGORITHM = "RSA";
-    private final String PRIVATE_KEY_FILE_PATH = DynamicWorkflowConfig.PRIVATE_KEY_PATH;
-    private final String PUBLIC_KEY_FILE_PATH = DynamicWorkflowConfig.PUBLIC_KEY_PATH;
 
 }

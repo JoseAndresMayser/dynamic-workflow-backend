@@ -6,6 +6,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.ActionReposito
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.ActionService;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.ActionDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.ActionMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +18,7 @@ public class ActionServiceImpl implements ActionService {
 
     private final ActionMapper actionMapper = new ActionMapper();
 
+    @Autowired
     public ActionServiceImpl(ActionRepository actionRepository) {
         this.actionRepository = actionRepository;
     }

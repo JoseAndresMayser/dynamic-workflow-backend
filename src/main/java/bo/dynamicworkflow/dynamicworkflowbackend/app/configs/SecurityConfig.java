@@ -7,9 +7,9 @@ public class SecurityConfig {
     }
 
     public static final String[] FREE_ENDPOINTS = {
-            "/rest/access/log-in",
-            "/rest/access/password/restore",
-            "/rest/users/requesting"
+            "/api/access/log-in",
+            "/api/access/password/restore",
+            "/api/users/requesting"
     };
 
 }
