@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class RoleWithActionsIdRequestDto {
+public class CompleteRoleRequestDto {
 
     private RoleRequestDto role;
     private List<Integer> actionsId;

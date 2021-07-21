@@ -28,11 +28,11 @@ public class Department {
     @Column(name = "location", nullable = false, length = 256)
     private String location;
 
-    @Column(name = "creation_date", nullable = false)
-    private Timestamp creationDate;
+    @Column(name = "creation_timestamp", nullable = false)
+    private Timestamp creationTimestamp;
 
-    @Column(name = "last_modified_date", nullable = false)
-    private Timestamp lastModifiedDate;
+    @Column(name = "modification_timestamp", nullable = false)
+    private Timestamp modificationTimestamp;
 
     @Column(name = "status", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)

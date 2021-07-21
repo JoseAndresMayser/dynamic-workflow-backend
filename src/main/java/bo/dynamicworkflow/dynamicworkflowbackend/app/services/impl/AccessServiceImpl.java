@@ -27,6 +27,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.ActionMapp
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.PasswordEncryptor;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.PasswordGenerator;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.TimeUtility;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -42,6 +43,7 @@ public class AccessServiceImpl implements AccessService {
 
     private final ActionMapper actionMapper = new ActionMapper();
 
+    @Autowired
     public AccessServiceImpl(UserRepository userRepository, TokenManager tokenManager,
                              UserActionRepository userActionRepository, NotificationService notificationService) {
         this.userRepository = userRepository;
@@ -84,7 +86,7 @@ public class AccessServiceImpl implements AccessService {
         String hashedPassword = hashPassword(temporalPassword);
         user.setPassword(hashedPassword);
         user.setStatus(UserStatus.RESTORE_PASSWORD);
-        user.setLastModifiedDate(TimeUtility.getCurrentTimestamp());
+        user.setModificationTimestamp(TimeUtility.getCurrentTimestamp());
         User updatedUser = userRepository.saveAndFlush(user);
         notificationService.sendRestorePasswordNotification(updatedUser.getEmail(), temporalPassword);
     }
@@ -98,7 +100,7 @@ public class AccessServiceImpl implements AccessService {
         String hashedPassword = hashPassword(newPassword);
         user.setPassword(hashedPassword);
         if (user.getStatus().equals(UserStatus.RESTORE_PASSWORD)) user.setStatus(UserStatus.ENABLED);
-        user.setLastModifiedDate(TimeUtility.getCurrentTimestamp());
+        user.setModificationTimestamp(TimeUtility.getCurrentTimestamp());
         User updatedUser = userRepository.saveAndFlush(user);
         notificationService.sendUpdatedPasswordNotification(updatedUser.getEmail());
     }

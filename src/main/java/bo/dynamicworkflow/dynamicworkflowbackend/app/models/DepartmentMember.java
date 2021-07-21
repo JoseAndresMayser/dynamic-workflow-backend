@@ -3,6 +3,7 @@ package bo.dynamicworkflow.dynamicworkflowbackend.app.models;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.sql.Timestamp;
 
 @Entity
 @Table(name = "department_members")
@@ -16,17 +17,23 @@ public class DepartmentMember {
     @Column(name = "is_department_boss", nullable = false)
     private Boolean isDepartmentBoss;
 
+    @Column(name = "assignment_timestamp", nullable = false)
+    private Timestamp assignmentTimestamp;
+
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive;
+
     @Column(name = "user_id", nullable = false)
     private Integer userId;
 
     @Column(name = "department_id", nullable = false)
     private Integer departmentId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id", referencedColumnName = "id", insertable = false, updatable = false)
     private Department department;
 

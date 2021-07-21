@@ -15,13 +15,14 @@ public class UserResponseDto {
     private Integer id;
     private String username;
     private UserStatus status;
-    private Timestamp creationDate;
-    private Timestamp lastModifiedDate;
+    private Timestamp creationTimestamp;
+    private Timestamp modificationTimestamp;
     private String names;
     private String firstSurname;
     private String secondSurname;
     private String email;
     private String phone;
+    private Integer identificationNumber;
     private String code;
 
 }

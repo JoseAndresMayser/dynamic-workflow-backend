@@ -18,8 +18,8 @@ public class DepartmentResponseDto {
     private String contactEmail;
     private String contactPhone;
     private String location;
-    private Timestamp creationDate;
-    private Timestamp lastModifiedDate;
+    private Timestamp creationTimestamp;
+    private Timestamp modificationTimestamp;
     private DepartmentStatus status;
     private Integer parentDepartmentId;
     private List<DepartmentResponseDto> subordinateDepartments;

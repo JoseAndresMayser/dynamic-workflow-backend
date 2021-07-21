@@ -39,7 +39,7 @@ public class UserController {
 
     @PostMapping
     @ResourceAction(actionCode = ActionCode.USER_REGISTER)
-    public GeneralResponse registerUser(@RequestBody UserWithActionsIdRequestDto request) throws UserException,
+    public GeneralResponse registerUser(@RequestBody CompleteUserRequestDto request) throws UserException,
             InvalidEmailException, InvalidPasswordException, ActionException {
         UserActionResponseDto response = userService.registerUser(request);
         return new GeneralResponse(true, response, "Usuario resgistrado exitosamente.");
@@ -47,7 +47,7 @@ public class UserController {
 
     @PostMapping("/{userId}")
     @ResourceAction(actionCode = ActionCode.USER_UPDATE)
-    public GeneralResponse updateUser(@RequestBody UserWithActionsIdRequestDto request,
+    public GeneralResponse updateUser(@RequestBody CompleteUserRequestDto request,
                                       @PathVariable("userId") Integer userId) throws UserException,
             InvalidEmailException, InvalidPasswordException, ActionException {
         UserActionResponseDto response = userService.updateUser(request, userId);
@@ -81,6 +81,24 @@ public class UserController {
     public GeneralResponse getAllUsers() {
         List<UserResponseDto> response = userService.getAllUsers();
         return new GeneralResponse(true, response, "Usuarios obtenidos exitosamente.");
+    }
+
+    @GetMapping("/non-department-bosses")
+    @ResourceAction(actionCode = ActionCode.USER_NON_DEPARTMENT_BOSSES)
+    public GeneralResponse getNonDepartmentBosses() {
+        List<UserResponseDto> response = userService.getNonDepartmentBosses();
+        return new GeneralResponse(
+                true,
+                response,
+                "Usuarios no jefes de departamentos obtenidos exitosamente."
+        );
+    }
+
+    @GetMapping("/non-department-members")
+    @ResourceAction(actionCode = ActionCode.USER_NON_DEPARTMENT_MEMBERS)
+    public GeneralResponse getNonDepartmentMembers() {
+        List<UserResponseDto> response = userService.getNonDepartmentMembers();
+        return new GeneralResponse(true, response, "Usuarios no analistas obtenidos exitosamente.");
     }
 
 }

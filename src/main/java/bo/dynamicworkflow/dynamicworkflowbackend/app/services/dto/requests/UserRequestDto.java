@@ -14,6 +14,7 @@ public class UserRequestDto {
     private String secondSurname;
     private String email;
     private String phone;
+    private Integer identificationNumber;
     private String code;
 
 }

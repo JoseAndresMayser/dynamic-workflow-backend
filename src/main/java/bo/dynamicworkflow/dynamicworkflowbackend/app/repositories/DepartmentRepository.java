@@ -11,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface DepartmentRepository extends JpaRepository<Department, Integer> {
 
-    @Query(value = "SELECT * FROM departments d WHERE d.parent_department_id is null LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT * FROM departments d WHERE d.parent_department_id IS NULL LIMIT 1", nativeQuery = true)
     Optional<Department> findRootDepartment();
 
     List<Department> getAllByParentDepartmentId(Integer parentDepartmentId);

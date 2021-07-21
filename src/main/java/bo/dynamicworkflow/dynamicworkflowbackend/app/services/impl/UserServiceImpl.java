@@ -24,6 +24,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.ActionMapp
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.UserMapper;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.PasswordEncryptor;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.TimeUtility;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -43,19 +44,23 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final RoleActionRepository roleActionRepository;
     private final ActionRepository actionRepository;
+    private final DepartmentMemberRepository departmentMemberRepository;
     private final NotificationService notificationService;
 
     private final ActionMapper actionMapper = new ActionMapper();
     private final UserMapper userMapper = new UserMapper();
 
+    @Autowired
     public UserServiceImpl(UserRepository userRepository, UserActionRepository userActionRepository,
                            RoleRepository roleRepository, RoleActionRepository roleActionRepository,
-                           ActionRepository actionRepository, NotificationService notificationService) {
+                           ActionRepository actionRepository, DepartmentMemberRepository departmentMemberRepository,
+                           NotificationService notificationService) {
         this.userRepository = userRepository;
         this.userActionRepository = userActionRepository;
         this.roleRepository = roleRepository;
         this.roleActionRepository = roleActionRepository;
         this.actionRepository = actionRepository;
+        this.departmentMemberRepository = departmentMemberRepository;
         this.notificationService = notificationService;
     }
 
@@ -77,7 +82,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(rollbackOn = ActionException.class)
-    public UserActionResponseDto registerUser(UserWithActionsIdRequestDto request) throws UserException,
+    public UserActionResponseDto registerUser(CompleteUserRequestDto request) throws UserException,
             InvalidEmailException, InvalidPasswordException, ActionException {
         User newUser = createNewUser(request.getUser(), false);
         List<Integer> actionsId = request.getActionsId();
@@ -89,7 +94,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(rollbackOn = ActionException.class)
-    public UserActionResponseDto updateUser(UserWithActionsIdRequestDto request, Integer userId) throws UserException,
+    public UserActionResponseDto updateUser(CompleteUserRequestDto request, Integer userId) throws UserException,
             InvalidEmailException, InvalidPasswordException, ActionException {
         User user = getUserByUserId(userId);
         User updatedUser = updateUser(user, request.getUser());
@@ -115,7 +120,29 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserResponseDto> getAllUsers() {
-        List<User> users = userRepository.findAll();
+        List<User> users = internalGetAllUsers();
+        return userMapper.toDto(users);
+    }
+
+    @Override
+    public List<UserResponseDto> getNonDepartmentBosses() {
+        List<Integer> departmentBossesId = departmentMemberRepository.getAllActiveDepartmentBossMembers()
+                .stream()
+                .map(departmentBossMember -> departmentBossMember.getUser().getId())
+                .collect(Collectors.toList());
+        List<User> users = internalGetAllUsers();
+        users.removeIf(user -> departmentBossesId.contains(user.getId()));
+        return userMapper.toDto(users);
+    }
+
+    @Override
+    public List<UserResponseDto> getNonDepartmentMembers() {
+        List<Integer> departmentMembersId = departmentMemberRepository.getAllActiveDepartmentMembers()
+                .stream()
+                .map(DepartmentMember::getId)
+                .collect(Collectors.toList());
+        List<User> users = internalGetAllUsers();
+        users.removeIf(user -> departmentMembersId.contains(user.getId()));
         return userMapper.toDto(users);
     }
 
@@ -149,8 +176,8 @@ public class UserServiceImpl implements UserService {
         user.setPassword(hashedPassword);
         user.setStatus(status);
         Timestamp currentTimestamp = TimeUtility.getCurrentTimestamp();
-        user.setCreationDate(currentTimestamp);
-        user.setLastModifiedDate(currentTimestamp);
+        user.setCreationTimestamp(currentTimestamp);
+        user.setModificationTimestamp(currentTimestamp);
 
         return userRepository.saveAndFlush(user);
     }
@@ -187,7 +214,7 @@ public class UserServiceImpl implements UserService {
     private void verifyIfEmailBelongsToUser(String email) throws InvalidEmailException {
         if (getOptionalUserByEmail(email).isPresent())
             throw new InvalidEmailException(
-                    String.format("Ya se encuentra registrado un Usuario con el correo electrónico: %s", email)
+                    String.format("Ya se encuentra registrado un Usuario con el correo electrónico: %s.", email)
             );
     }
 
@@ -289,7 +316,7 @@ public class UserServiceImpl implements UserService {
             userToUpdate.setPassword(hashedPassword);
         }
         userToUpdate.setStatus(getStatusFromString(userRequest.getStatus()));
-        userToUpdate.setLastModifiedDate(TimeUtility.getCurrentTimestamp());
+        userToUpdate.setModificationTimestamp(TimeUtility.getCurrentTimestamp());
         userToUpdate.setNames(userRequest.getNames());
         userToUpdate.setFirstSurname(userRequest.getFirstSurname());
         userToUpdate.setSecondSurname(userRequest.getSecondSurname());
@@ -313,6 +340,10 @@ public class UserServiceImpl implements UserService {
 
     private List<UserAction> internalGetUserActionsByUserId(Integer userId) {
         return userActionRepository.getAllByUserId(userId);
+    }
+
+    private List<User> internalGetAllUsers() {
+        return userRepository.findAll();
     }
 
 }

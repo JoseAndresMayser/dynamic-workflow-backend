@@ -25,11 +25,11 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 
-    @Column(name = "creation_date", nullable = false)
-    private Timestamp creationDate;
+    @Column(name = "creation_timestamp", nullable = false)
+    private Timestamp creationTimestamp;
 
-    @Column(name = "last_modified_date", nullable = false)
-    private Timestamp lastModifiedDate;
+    @Column(name = "modification_timestamp", nullable = false)
+    private Timestamp modificationTimestamp;
 
     @Column(name = "names", nullable = false, length = 256)
     private String names;
@@ -45,6 +45,9 @@ public class User {
 
     @Column(name = "phone", nullable = false, length = 50)
     private String phone;
+
+    @Column(name = "identification_number")
+    private Integer identificationNumber;
 
     @Column(name = "code", length = 50)
     private String code;

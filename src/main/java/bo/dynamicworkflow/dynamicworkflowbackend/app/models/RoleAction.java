@@ -19,11 +19,11 @@ public class RoleAction {
     @Column(name = "action_id", nullable = false)
     private Integer actionId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id", referencedColumnName = "id", insertable = false, updatable = false)
     private Role role;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "action_id", referencedColumnName = "id", insertable = false, updatable = false)
     private Action action;
 

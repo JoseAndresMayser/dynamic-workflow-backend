@@ -6,7 +6,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.role.RoleExcepti
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.role.RoleNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.enums.ActionCode;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.RoleService;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.RoleWithActionsIdRequestDto;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.CompleteRoleRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.UpdateRoleActionRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.GeneralResponse;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.RoleActionResponseDto;
@@ -29,7 +29,7 @@ public class RoleController {
 
     @PostMapping
     @ResourceAction(actionCode = ActionCode.ROLE_REGISTER)
-    public GeneralResponse registerRole(@RequestBody RoleWithActionsIdRequestDto request) throws RoleException,
+    public GeneralResponse registerRole(@RequestBody CompleteRoleRequestDto request) throws RoleException,
             ActionException {
         RoleActionResponseDto response = roleService.registerRole(request);
         return new GeneralResponse(true, response, "Rol registrado exitosamente.");
@@ -37,7 +37,7 @@ public class RoleController {
 
     @PostMapping("/{roleId}")
     @ResourceAction(actionCode = ActionCode.ROLE_UPDATE)
-    public GeneralResponse updateRole(@RequestBody RoleWithActionsIdRequestDto request,
+    public GeneralResponse updateRole(@RequestBody CompleteRoleRequestDto request,
                                       @PathVariable("roleId") Integer roleId) throws RoleException, ActionException {
         RoleActionResponseDto response = roleService.updateRole(request, roleId);
         return new GeneralResponse(true, response, "Rol actualizado exitosamente.");

@@ -30,8 +30,8 @@ public class DepartmentMapper extends BaseMapper<DepartmentRequestDto, Departmen
                 department.getContactEmail(),
                 department.getContactPhone(),
                 department.getLocation(),
-                department.getCreationDate(),
-                department.getLastModifiedDate(),
+                department.getCreationTimestamp(),
+                department.getModificationTimestamp(),
                 department.getStatus(),
                 department.getParentDepartmentId(),
                 subordinateDepartments != null && !subordinateDepartments.isEmpty() ?
