@@ -288,3 +288,13 @@ INSERT INTO user_actions(user_id, action_id)
 VALUES (1, 23);
 INSERT INTO user_actions(user_id, action_id)
 VALUES (1, 24);
+
+
+INSERT INTO actions(code, description)
+VALUES ('USER_ACTIONS_GET', 'Ver acciones de usuario');
+
+
+INSERT INTO role_actions(role_id, action_id)
+VALUES (1, 25);
+INSERT INTO user_actions(user_id, action_id)
+VALUES (1, 25);
