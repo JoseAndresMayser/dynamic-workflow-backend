@@ -7,6 +7,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.InvalidPasswordE
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.ActionException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.role.RoleException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.user.UserException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.user.UserNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.enums.ActionCode;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.UserService;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.*;
@@ -81,6 +82,13 @@ public class UserController {
     public GeneralResponse getAllUsers() {
         List<UserResponseDto> response = userService.getAllUsers();
         return new GeneralResponse(true, response, "Usuarios obtenidos exitosamente.");
+    }
+
+    @GetMapping("/{userId}/actions")
+    @ResourceAction(actionCode = ActionCode.USER_ACTIONS_GET)
+    public GeneralResponse getUserActionsByUserId(@PathVariable("userId") Integer userId) throws UserNotFoundException {
+        UserActionResponseDto response = userService.getUserActionsByUserId(userId);
+        return new GeneralResponse(true, response, "Acciones del usuario obtenidas exitosamente.");
     }
 
     @GetMapping("/non-department-bosses")

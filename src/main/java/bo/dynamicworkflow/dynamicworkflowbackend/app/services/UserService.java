@@ -5,6 +5,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.InvalidPasswordE
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.ActionException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.role.RoleException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.user.UserException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.user.UserNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.*;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.UserActionResponseDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.UserResponseDto;
@@ -15,20 +16,22 @@ import java.util.List;
 public interface UserService extends UserDetailsService {
 
     UserResponseDto registerRequestingUser(UserRequestDto request) throws UserException, InvalidEmailException,
-            InvalidPasswordException, RoleException, ActionException;
+        InvalidPasswordException, RoleException, ActionException;
 
     UserActionResponseDto registerUser(CompleteUserRequestDto request) throws UserException, InvalidEmailException,
-            InvalidPasswordException, ActionException;
+        InvalidPasswordException, ActionException;
 
     UserActionResponseDto updateUser(CompleteUserRequestDto request, Integer userId) throws UserException,
-            InvalidEmailException, InvalidPasswordException, ActionException;
+        InvalidEmailException, InvalidPasswordException, ActionException;
 
     UserResponseDto updateCurrentUser(UserRequestDto request) throws UserException, InvalidEmailException,
-            InvalidPasswordException;
+        InvalidPasswordException;
 
     UserResponseDto getByUserId(Integer userId) throws UserException;
 
     List<UserResponseDto> getAllUsers();
+
+    UserActionResponseDto getUserActionsByUserId(Integer userId) throws UserNotFoundException;
 
     List<UserResponseDto> getNonDepartmentBosses();
 
