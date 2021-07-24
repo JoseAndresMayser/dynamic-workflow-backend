@@ -22,21 +22,29 @@ public class DepartmentMapper extends BaseMapper<DepartmentRequestDto, Departmen
 
     @Override
     public DepartmentResponseDto toDto(Department department) {
-        if (department == null) return null;
+        DepartmentResponseDto departmentResponseDto = internalToDto(department);
+        departmentResponseDto.setParentDepartment(internalToDto(department.getParentDepartment()));
         List<Department> subordinateDepartments = department.getSubordinateDepartments();
-        return new DepartmentResponseDto(
-                department.getId(),
-                department.getName(),
-                department.getContactEmail(),
-                department.getContactPhone(),
-                department.getLocation(),
-                department.getCreationTimestamp(),
-                department.getModificationTimestamp(),
-                department.getStatus(),
-                department.getParentDepartmentId(),
-                subordinateDepartments != null && !subordinateDepartments.isEmpty() ?
-                        subordinateDepartments.stream().map(this::toDto).collect(Collectors.toList()) : null
-        );
+        if (subordinateDepartments != null && !subordinateDepartments.isEmpty())
+            departmentResponseDto.setSubordinateDepartments(
+                    subordinateDepartments.stream().map(this::toDto).collect(Collectors.toList())
+            );
+        return departmentResponseDto;
+    }
+
+    private DepartmentResponseDto internalToDto(Department department) {
+        if (department == null) return null;
+        DepartmentResponseDto departmentResponseDto = new DepartmentResponseDto();
+        departmentResponseDto.setId(department.getId());
+        departmentResponseDto.setName(department.getName());
+        departmentResponseDto.setContactEmail(department.getContactEmail());
+        departmentResponseDto.setContactPhone(department.getContactPhone());
+        departmentResponseDto.setLocation(department.getLocation());
+        departmentResponseDto.setCreationTimestamp(department.getCreationTimestamp());
+        departmentResponseDto.setModificationTimestamp(department.getModificationTimestamp());
+        departmentResponseDto.setStatus(department.getStatus());
+        departmentResponseDto.setParentDepartmentId(department.getParentDepartmentId());
+        return departmentResponseDto;
     }
 
 }

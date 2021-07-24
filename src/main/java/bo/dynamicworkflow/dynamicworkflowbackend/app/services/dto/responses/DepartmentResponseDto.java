@@ -22,6 +22,7 @@ public class DepartmentResponseDto {
     private Timestamp modificationTimestamp;
     private DepartmentStatus status;
     private Integer parentDepartmentId;
+    private DepartmentResponseDto parentDepartment;
     private List<DepartmentResponseDto> subordinateDepartments;
 
 }
