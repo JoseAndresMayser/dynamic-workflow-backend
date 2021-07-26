@@ -24,7 +24,7 @@ public class ActionController {
     }
 
     @GetMapping("/all")
-    @ResourceAction(actionCode = ActionCode.ACTION_GET_ALL)
+    @ResourceAction(enablerActions = {ActionCode.ROLE_REGISTER, ActionCode.ROLE_UPDATE})
     public GeneralResponse getAllActions() {
         List<ActionDto> response = actionService.getAllActions();
         return new GeneralResponse(true, response, "Acciones obtenidas exitosamente.");

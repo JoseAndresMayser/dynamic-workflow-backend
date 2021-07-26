@@ -15,8 +15,10 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.jws.soap.SOAPBinding;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -40,10 +42,10 @@ public class AccessHandlerInterceptor implements HandlerInterceptor {
             HandlerMethod handlerMethod = (HandlerMethod) handler;
             ResourceAction resourceAction = handlerMethod.getMethod().getAnnotation(ResourceAction.class);
             if (resourceAction != null) {
-                ActionCode actionCode = resourceAction.actionCode();
+                ActionCode actionCode = resourceAction.action();
                 if (actionRequiresAuth(actionCode)) {
                     UserAccountDto userAccountDto = SessionHolder.getCurrentUserAccount();
-                    if (userAccountDto == null || !hasAccessToTheResource(actionCode, userAccountDto.getId())) {
+                    if (userAccountDto == null || !hasAccessToTheResource(resourceAction, userAccountDto.getId())) {
                         response.getWriter().write("User not authorized to access this resource.");
                         response.setStatus(HttpStatus.FORBIDDEN.value());
                         return false;
@@ -72,21 +74,31 @@ public class AccessHandlerInterceptor implements HandlerInterceptor {
     }
 
     private Boolean actionRequiresAuth(ActionCode actionCode) {
-        List<ActionCode> actionsCodeWithoutAuthentication = ActionCode.getActionsCodeWithoutAuth();
-        return !actionsCodeWithoutAuthentication.contains(actionCode);
+        List<ActionCode> actionsWithoutAuth = ActionCode.actionsWithoutAuth();
+        return !actionsWithoutAuth.contains(actionCode);
     }
 
-    private Boolean hasAccessToTheResource(ActionCode actionCode, Integer userId) {
+    private Boolean hasAccessToTheResource(ResourceAction resourceAction, Integer userId) {
         List<UserAction> userActions = userActionRepository.getAllByUserId(userId);
-        return userActions.stream().anyMatch(userAction -> userAction.getAction().getCode().equals(actionCode));
+        ActionCode actionCode = resourceAction.action();
+        if (!actionCode.equals(ActionCode.NOT_MAIN_ACTION))
+            return userActions.stream().anyMatch(userAction -> userAction.getAction().getCode().equals(actionCode));
+        List<ActionCode> enablerActions = Arrays.asList(resourceAction.enablerActions());
+        if (enablerActions.isEmpty()) return false;
+        return userActions.stream()
+                .anyMatch(userAction -> enablerActions.stream()
+                        .anyMatch(enablerAction -> userAction.getAction().getCode().equals(enablerAction))
+                );
     }
 
     private void setActionIdInSessionHolder(ActionCode actionCode) throws ActionNotFoundException {
-        Action action = actionRepository.findByCode(actionCode)
-                .orElseThrow(() -> new ActionNotFoundException(
-                        String.format("No se pudo encontrar la Acción con code: %s", actionCode.name())
-                ));
-        SessionHolder.setCurrentActionId(action.getId());
+        if (!actionCode.equals(ActionCode.NOT_MAIN_ACTION)) {
+            Action action = actionRepository.findByCode(actionCode)
+                    .orElseThrow(() -> new ActionNotFoundException(
+                            String.format("No se pudo encontrar la Acción con code: %s", actionCode.name())
+                    ));
+            SessionHolder.setCurrentActionId(action.getId());
+        }
     }
 
     private void registerActionExecutedByUser() {

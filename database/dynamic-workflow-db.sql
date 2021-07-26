@@ -54,16 +54,10 @@ VALUES ('ROLE_REGISTER', 'Registrar rol');
 INSERT INTO actions(code, description)
 VALUES ('ROLE_UPDATE', 'Actualizar rol');
 INSERT INTO actions(code, description)
-VALUES ('ROLE_GET', 'Ver detalle de rol');
-INSERT INTO actions(code, description)
 VALUES ('ROLE_GET_ALL', 'Ver todos los roles');
-INSERT INTO actions(code, description)
-VALUES ('ROLE_ACTIONS_GET', 'Ver acciones de rol');
 INSERT INTO actions(code, description)
 VALUES ('ROLE_DELETE', 'Eliminar rol');
 
-INSERT INTO actions(code, description)
-VALUES ('ACTION_GET_ALL', 'Ver todas las acciones');
 
 INSERT INTO actions(code, description)
 VALUES ('USER_REGISTER_REQUESTING', 'Registrarse como solicitante');
@@ -73,10 +67,6 @@ INSERT INTO actions(code, description)
 VALUES ('USER_UPDATE', 'Actualizar usuario');
 INSERT INTO actions(code, description)
 VALUES ('USER_CURRENT_UPDATE', 'Actualizar perfil');
-INSERT INTO actions(code, description)
-VALUES ('USER_GET', 'Ver detalle de usuario');
-INSERT INTO actions(code, description)
-VALUES ('USER_CURRENT_GET', 'Ver perfil');
 INSERT INTO actions(code, description)
 VALUES ('USER_GET_ALL', 'Ver todos los usuarios');
 
@@ -92,44 +82,28 @@ VALUES (1, 6);
 INSERT INTO role_actions(role_id, action_id)
 VALUES (1, 7);
 INSERT INTO role_actions(role_id, action_id)
-VALUES (1, 8);
-INSERT INTO role_actions(role_id, action_id)
 VALUES (1, 9);
 INSERT INTO role_actions(role_id, action_id)
 VALUES (1, 10);
 INSERT INTO role_actions(role_id, action_id)
+VALUES (1, 11);
+INSERT INTO role_actions(role_id, action_id)
 VALUES (1, 12);
-INSERT INTO role_actions(role_id, action_id)
-VALUES (1, 13);
-INSERT INTO role_actions(role_id, action_id)
-VALUES (1, 14);
-INSERT INTO role_actions(role_id, action_id)
-VALUES (1, 15);
-INSERT INTO role_actions(role_id, action_id)
-VALUES (1, 16);
-INSERT INTO role_actions(role_id, action_id)
-VALUES (1, 17);
 
 INSERT INTO role_actions(role_id, action_id)
 VALUES (2, 3);
 INSERT INTO role_actions(role_id, action_id)
-VALUES (2, 14);
-INSERT INTO role_actions(role_id, action_id)
-VALUES (2, 16);
+VALUES (2, 11);
 
 INSERT INTO role_actions(role_id, action_id)
 VALUES (3, 3);
 INSERT INTO role_actions(role_id, action_id)
-VALUES (3, 14);
-INSERT INTO role_actions(role_id, action_id)
-VALUES (3, 16);
+VALUES (3, 11);
 
 INSERT INTO role_actions(role_id, action_id)
 VALUES (4, 3);
 INSERT INTO role_actions(role_id, action_id)
-VALUES (4, 14);
-INSERT INTO role_actions(role_id, action_id)
-VALUES (4, 16);
+VALUES (4, 11);
 
 
 /* 2 */
@@ -183,23 +157,13 @@ VALUES (1, 6);
 INSERT INTO user_actions(user_id, action_id)
 VALUES (1, 7);
 INSERT INTO user_actions(user_id, action_id)
-VALUES (1, 8);
-INSERT INTO user_actions(user_id, action_id)
 VALUES (1, 9);
 INSERT INTO user_actions(user_id, action_id)
 VALUES (1, 10);
 INSERT INTO user_actions(user_id, action_id)
+VALUES (1, 11);
+INSERT INTO user_actions(user_id, action_id)
 VALUES (1, 12);
-INSERT INTO user_actions(user_id, action_id)
-VALUES (1, 13);
-INSERT INTO user_actions(user_id, action_id)
-VALUES (1, 14);
-INSERT INTO user_actions(user_id, action_id)
-VALUES (1, 15);
-INSERT INTO user_actions(user_id, action_id)
-VALUES (1, 16);
-INSERT INTO user_actions(user_id, action_id)
-VALUES (1, 17);
 
 
 /* 3 */
@@ -249,52 +213,36 @@ VALUES ('DEPARTMENT_GET_ALL', 'Ver todos los departamentos');
 
 
 INSERT INTO role_actions(role_id, action_id)
-VALUES (1, 18);
+VALUES (1, 13);
 INSERT INTO role_actions(role_id, action_id)
-VALUES (1, 19);
+VALUES (1, 14);
 INSERT INTO role_actions(role_id, action_id)
-VALUES (1, 20);
+VALUES (1, 15);
 INSERT INTO role_actions(role_id, action_id)
-VALUES (1, 21);
+VALUES (1, 16);
 INSERT INTO role_actions(role_id, action_id)
-VALUES (1, 22);
-
-
-INSERT INTO user_actions(user_id, action_id)
-VALUES (1, 18);
-INSERT INTO user_actions(user_id, action_id)
-VALUES (1, 19);
-INSERT INTO user_actions(user_id, action_id)
-VALUES (1, 20);
-INSERT INTO user_actions(user_id, action_id)
-VALUES (1, 21);
-INSERT INTO user_actions(user_id, action_id)
-VALUES (1, 22);
-
-
-INSERT INTO actions(code, description)
-VALUES ('USER_NON_DEPARTMENT_BOSSES', 'Ver todos los usuarios no jefes de departamentos');
-INSERT INTO actions(code, description)
-VALUES ('USER_NON_DEPARTMENT_MEMBERS', 'Ver todos los usuarios no miembros de departamentos');
+VALUES (1, 17);
 
 
 INSERT INTO role_actions(role_id, action_id)
-VALUES (1, 23);
+VALUES (2, 13);
 INSERT INTO role_actions(role_id, action_id)
-VALUES (1, 24);
-
-
-INSERT INTO user_actions(user_id, action_id)
-VALUES (1, 23);
-INSERT INTO user_actions(user_id, action_id)
-VALUES (1, 24);
-
-
-INSERT INTO actions(code, description)
-VALUES ('USER_ACTIONS_GET', 'Ver acciones de usuario');
-
-
+VALUES (2, 14);
 INSERT INTO role_actions(role_id, action_id)
-VALUES (1, 25);
+VALUES (2, 15);
+INSERT INTO role_actions(role_id, action_id)
+VALUES (2, 16);
+INSERT INTO role_actions(role_id, action_id)
+VALUES (2, 17);
+
+
 INSERT INTO user_actions(user_id, action_id)
-VALUES (1, 25);
+VALUES (1, 13);
+INSERT INTO user_actions(user_id, action_id)
+VALUES (1, 14);
+INSERT INTO user_actions(user_id, action_id)
+VALUES (1, 15);
+INSERT INTO user_actions(user_id, action_id)
+VALUES (1, 16);
+INSERT INTO user_actions(user_id, action_id)
+VALUES (1, 17);

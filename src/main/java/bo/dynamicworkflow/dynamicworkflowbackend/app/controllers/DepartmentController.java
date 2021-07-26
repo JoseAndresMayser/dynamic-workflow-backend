@@ -33,7 +33,7 @@ public class DepartmentController {
     }
 
     @PostMapping("/complete")
-    @ResourceAction(actionCode = ActionCode.DEPARTMENT_REGISTER)
+    @ResourceAction(action = ActionCode.DEPARTMENT_REGISTER)
     public GeneralResponse registerCompleteDepartment(@RequestBody CompleteDepartmentRequestDto request)
             throws DepartmentException, UserAlreadyDepartmentMemberException, UserException {
         CompleteDepartmentResponseDto response = departmentService.registerCompleteDepartment(request);
@@ -41,7 +41,7 @@ public class DepartmentController {
     }
 
     @PostMapping("/{departmentId}")
-    @ResourceAction(actionCode = ActionCode.DEPARTMENT_UPDATE)
+    @ResourceAction(action = ActionCode.DEPARTMENT_UPDATE)
     public GeneralResponse updateDepartment(@RequestBody DepartmentRequestDto request,
                                             @PathVariable("departmentId") Integer departmentId)
             throws DepartmentException {
@@ -50,7 +50,7 @@ public class DepartmentController {
     }
 
     @PostMapping("/{departmentId}/members")
-    @ResourceAction(actionCode = ActionCode.DEPARTMENT_UPDATE_MEMBERS)
+    @ResourceAction(action = ActionCode.DEPARTMENT_UPDATE_MEMBERS)
     public GeneralResponse updateDepartmentMembers(@RequestBody UpdateDepartmentMembersRequestDto request,
                                                    @PathVariable("departmentId") Integer departmentId)
             throws DepartmentException, UserNotFoundException, DepartmentMemberException {
@@ -63,7 +63,7 @@ public class DepartmentController {
     }
 
     @GetMapping("/{departmentId}/complete")
-    @ResourceAction(actionCode = ActionCode.DEPARTMENT_GET)
+    @ResourceAction(action = ActionCode.DEPARTMENT_GET)
     public GeneralResponse getCompleteDepartmentById(@PathVariable("departmentId") Integer departmentId)
             throws DepartmentNotFoundException, DepartmentMemberNotFoundException, UserNotFoundException {
         CompleteDepartmentResponseDto response = departmentService.getCompleteDepartmentById(departmentId);
@@ -71,7 +71,7 @@ public class DepartmentController {
     }
 
     @GetMapping("/current-user/all")
-    @ResourceAction(actionCode = ActionCode.DEPARTMENT_GET_ALL)
+    @ResourceAction(action = ActionCode.DEPARTMENT_GET_ALL)
     public GeneralResponse getAllDepartmentsForCurrentUser() throws DepartmentMemberNotFoundException,
             DepartmentNotFoundException {
         List<DepartmentResponseDto> response = departmentService.getAllDepartmentsForCurrentUser();

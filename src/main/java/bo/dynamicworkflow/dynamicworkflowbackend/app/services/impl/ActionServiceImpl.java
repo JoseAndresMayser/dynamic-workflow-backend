@@ -31,8 +31,8 @@ public class ActionServiceImpl implements ActionService {
     }
 
     private void purgeActionsWithoutAuth(List<Action> actions) {
-        List<ActionCode> actionsCodeWithoutAuth = ActionCode.getActionsCodeWithoutAuth();
-        actions.removeIf(action -> actionsCodeWithoutAuth.contains(action.getCode()));
+        List<ActionCode> actionsWithoutAuth = ActionCode.actionsWithoutAuth();
+        actions.removeIf(action -> actionsWithoutAuth.contains(action.getCode()));
     }
 
 }
