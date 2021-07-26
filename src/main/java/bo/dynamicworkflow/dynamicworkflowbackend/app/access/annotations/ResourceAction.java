@@ -15,6 +15,9 @@ import java.lang.annotation.Target;
 public @interface ResourceAction {
 
     @Nonbinding
-    ActionCode actionCode();
+    ActionCode action() default ActionCode.NOT_MAIN_ACTION;
+
+    @Nonbinding
+    ActionCode[] enablerActions() default {};
 
 }

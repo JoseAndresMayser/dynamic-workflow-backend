@@ -29,7 +29,7 @@ public class AccessController {
     }
 
     @PostMapping("/log-in")
-    @ResourceAction(actionCode = ActionCode.ACCESS_LOG_IN)
+    @ResourceAction(action = ActionCode.ACCESS_LOG_IN)
     public GeneralResponse logIn(@RequestBody AccessRequestDto request) throws UserException, InvalidPasswordException,
             GenerateTokenException {
         AccessResponseDto response = accessService.logIn(request);
@@ -37,14 +37,14 @@ public class AccessController {
     }
 
     @PostMapping("/password/restore")
-    @ResourceAction(actionCode = ActionCode.ACCESS_PASSWORD_RESTORE)
+    @ResourceAction(action = ActionCode.ACCESS_PASSWORD_RESTORE)
     public GeneralResponse restorePassword(@RequestBody RestorePasswordRequestDto request) throws UserException {
         accessService.restorePassword(request);
         return new GeneralResponse(true, null, "Contraseña restaurada exitosamente.");
     }
 
     @PostMapping("/password/update")
-    @ResourceAction(actionCode = ActionCode.ACCESS_PASSWORD_UPDATE)
+    @ResourceAction(action = ActionCode.ACCESS_PASSWORD_UPDATE)
     public GeneralResponse updatePassword(@RequestBody UpdatePasswordRequestDto request) throws UserException,
             InvalidPasswordException {
         accessService.updatePassword(request);

@@ -31,7 +31,7 @@ public class UserController {
     }
 
     @PostMapping("/requesting")
-    @ResourceAction(actionCode = ActionCode.USER_REGISTER_REQUESTING)
+    @ResourceAction(action = ActionCode.USER_REGISTER_REQUESTING)
     public GeneralResponse registerRequestingUser(@RequestBody UserRequestDto request) throws UserException,
             InvalidEmailException, InvalidPasswordException, RoleException, ActionException {
         UserResponseDto response = userService.registerRequestingUser(request);
@@ -39,7 +39,7 @@ public class UserController {
     }
 
     @PostMapping
-    @ResourceAction(actionCode = ActionCode.USER_REGISTER)
+    @ResourceAction(action = ActionCode.USER_REGISTER)
     public GeneralResponse registerUser(@RequestBody CompleteUserRequestDto request) throws UserException,
             InvalidEmailException, InvalidPasswordException, ActionException {
         UserActionResponseDto response = userService.registerUser(request);
@@ -47,7 +47,7 @@ public class UserController {
     }
 
     @PostMapping("/{userId}")
-    @ResourceAction(actionCode = ActionCode.USER_UPDATE)
+    @ResourceAction(action = ActionCode.USER_UPDATE)
     public GeneralResponse updateUser(@RequestBody CompleteUserRequestDto request,
                                       @PathVariable("userId") Integer userId) throws UserException,
             InvalidEmailException, InvalidPasswordException, ActionException {
@@ -56,7 +56,7 @@ public class UserController {
     }
 
     @PostMapping("/current")
-    @ResourceAction(actionCode = ActionCode.USER_CURRENT_UPDATE)
+    @ResourceAction(action = ActionCode.USER_CURRENT_UPDATE)
     public GeneralResponse updateCurrentUser(@RequestBody UserRequestDto request) throws UserException,
             InvalidEmailException, InvalidPasswordException {
         UserResponseDto response = userService.updateCurrentUser(request);
@@ -64,35 +64,35 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    @ResourceAction(actionCode = ActionCode.USER_GET)
+    //@ResourceAction(action = ActionCode.USER_GET)
     public GeneralResponse getUserByUserId(@PathVariable("userId") Integer userId) throws UserException {
         UserResponseDto response = userService.getByUserId(userId);
         return new GeneralResponse(true, response, "Usuario obtenido exitosamente.");
     }
 
     @GetMapping("/current")
-    @ResourceAction(actionCode = ActionCode.USER_CURRENT_GET)
+    //@ResourceAction(action = ActionCode.USER_CURRENT_GET)
     public GeneralResponse getCurrentUser() throws UserException {
         UserResponseDto response = userService.getByUserId(SessionHolder.getCurrentUserId());
         return new GeneralResponse(true, response, "Usuario actual obtenido exitosamente.");
     }
 
     @GetMapping("/all")
-    @ResourceAction(actionCode = ActionCode.USER_GET_ALL)
+    @ResourceAction(action = ActionCode.USER_GET_ALL)
     public GeneralResponse getAllUsers() {
         List<UserResponseDto> response = userService.getAllUsers();
         return new GeneralResponse(true, response, "Usuarios obtenidos exitosamente.");
     }
 
     @GetMapping("/{userId}/actions")
-    @ResourceAction(actionCode = ActionCode.USER_ACTIONS_GET)
+    @ResourceAction(enablerActions = {ActionCode.USER_GET_ALL, ActionCode.USER_UPDATE})
     public GeneralResponse getUserActionsByUserId(@PathVariable("userId") Integer userId) throws UserNotFoundException {
         UserActionResponseDto response = userService.getUserActionsByUserId(userId);
         return new GeneralResponse(true, response, "Acciones del usuario obtenidas exitosamente.");
     }
 
     @GetMapping("/non-department-bosses")
-    @ResourceAction(actionCode = ActionCode.USER_NON_DEPARTMENT_BOSSES)
+    @ResourceAction(enablerActions = {ActionCode.DEPARTMENT_REGISTER, ActionCode.DEPARTMENT_UPDATE_MEMBERS})
     public GeneralResponse getNonDepartmentBosses() {
         List<UserResponseDto> response = userService.getNonDepartmentBosses();
         return new GeneralResponse(
@@ -103,7 +103,7 @@ public class UserController {
     }
 
     @GetMapping("/non-department-members")
-    @ResourceAction(actionCode = ActionCode.USER_NON_DEPARTMENT_MEMBERS)
+    @ResourceAction(enablerActions = {ActionCode.DEPARTMENT_REGISTER, ActionCode.DEPARTMENT_UPDATE_MEMBERS})
     public GeneralResponse getNonDepartmentMembers() {
         List<UserResponseDto> response = userService.getNonDepartmentMembers();
         return new GeneralResponse(true, response, "Usuarios no analistas obtenidos exitosamente.");

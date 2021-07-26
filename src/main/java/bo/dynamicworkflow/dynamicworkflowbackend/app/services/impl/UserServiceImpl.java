@@ -277,7 +277,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private void verifyActionsIdWithoutAuthentication(List<Integer> actionsId) throws ActionException {
-        List<ActionCode> actionsCodeWithoutAuthentication = ActionCode.getActionsCodeWithoutAuth();
+        List<ActionCode> actionsCodeWithoutAuthentication = ActionCode.actionsWithoutAuth();
         for (ActionCode actionCode : actionsCodeWithoutAuthentication) {
             Action action = actionRepository.findByCode(actionCode)
                 .orElseThrow(() -> new ActionNotFoundException(

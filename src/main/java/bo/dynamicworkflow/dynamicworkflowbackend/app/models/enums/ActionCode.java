@@ -5,6 +5,8 @@ import java.util.List;
 
 public enum ActionCode {
 
+    NOT_MAIN_ACTION,
+
     ACCESS_LOG_IN,
     ACCESS_PASSWORD_RESTORE,
     ACCESS_PASSWORD_UPDATE,
@@ -35,7 +37,7 @@ public enum ActionCode {
     DEPARTMENT_GET,
     DEPARTMENT_GET_ALL;
 
-    public static List<ActionCode> getActionsCodeWithoutAuth() {
+    public static List<ActionCode> actionsWithoutAuth() {
         return new ArrayList<ActionCode>() {
             {
                 add(ACCESS_LOG_IN);

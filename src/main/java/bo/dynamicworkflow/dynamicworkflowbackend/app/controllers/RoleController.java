@@ -28,7 +28,7 @@ public class RoleController {
     }
 
     @PostMapping
-    @ResourceAction(actionCode = ActionCode.ROLE_REGISTER)
+    @ResourceAction(action = ActionCode.ROLE_REGISTER)
     public GeneralResponse registerRole(@RequestBody CompleteRoleRequestDto request) throws RoleException,
             ActionException {
         RoleActionResponseDto response = roleService.registerRole(request);
@@ -36,7 +36,7 @@ public class RoleController {
     }
 
     @PostMapping("/{roleId}")
-    @ResourceAction(actionCode = ActionCode.ROLE_UPDATE)
+    @ResourceAction(action = ActionCode.ROLE_UPDATE)
     public GeneralResponse updateRole(@RequestBody CompleteRoleRequestDto request,
                                       @PathVariable("roleId") Integer roleId) throws RoleException, ActionException {
         RoleActionResponseDto response = roleService.updateRole(request, roleId);
@@ -44,7 +44,7 @@ public class RoleController {
     }
 
     @PostMapping("/{roleId}/actions")
-    @ResourceAction(actionCode = ActionCode.ROLE_UPDATE)
+    @ResourceAction(action = ActionCode.ROLE_UPDATE)
     public GeneralResponse updateRoleActions(@RequestBody UpdateRoleActionRequestDto request,
                                              @PathVariable("roleId") Integer roleId) throws RoleException,
             ActionException {
@@ -53,28 +53,29 @@ public class RoleController {
     }
 
     @GetMapping("/{roleId}")
-    @ResourceAction(actionCode = ActionCode.ROLE_GET)
+    //@ResourceAction(action = ActionCode.ROLE_GET)
     public GeneralResponse getByRoleId(@PathVariable("roleId") Integer roleId) throws RoleException {
         RoleResponseDto response = roleService.getByRoleId(roleId);
         return new GeneralResponse(true, response, "Rol obtenido exitosamente.");
     }
 
     @GetMapping("/all")
-    @ResourceAction(actionCode = ActionCode.ROLE_GET_ALL)
+    @ResourceAction(action = ActionCode.ROLE_GET_ALL)
     public GeneralResponse getAllRoles() {
         List<RoleResponseDto> response = roleService.getAllRoles();
         return new GeneralResponse(true, response, "Roles obtenidos exitosamente.");
     }
 
     @GetMapping("/{roleId}/actions")
-    @ResourceAction(actionCode = ActionCode.ROLE_ACTIONS_GET)
+    @ResourceAction(enablerActions = {ActionCode.ROLE_GET_ALL, ActionCode.ROLE_UPDATE, ActionCode.USER_REGISTER,
+            ActionCode.USER_UPDATE})
     public GeneralResponse getRoleActionsByRoleId(@PathVariable("roleId") Integer roleId) throws RoleException {
         RoleActionResponseDto response = roleService.getRoleActionsByRoleId(roleId);
         return new GeneralResponse(true, response, "Acciones del rol obtenidas exitosamente.");
     }
 
     @DeleteMapping("/{roleId}")
-    @ResourceAction(actionCode = ActionCode.ROLE_DELETE)
+    @ResourceAction(action = ActionCode.ROLE_DELETE)
     public GeneralResponse deleteRole(@PathVariable("roleId") Integer roleId) throws RoleNotFoundException {
         roleService.deleteRole(roleId);
         return new GeneralResponse(true, null, "Rol eliminado exitosamente.");
