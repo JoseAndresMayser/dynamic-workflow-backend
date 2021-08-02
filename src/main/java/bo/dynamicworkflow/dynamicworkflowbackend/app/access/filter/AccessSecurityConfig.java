@@ -1,5 +1,7 @@
 package bo.dynamicworkflow.dynamicworkflowbackend.app.access.filter;
 
+import bo.dynamicworkflow.dynamicworkflowbackend.app.configs.SecurityConfig;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,6 +18,7 @@ public class AccessSecurityConfig extends WebSecurityConfigurerAdapter {
     private final AccessAuthenticationEntryPoint accessAuthenticationEntryPoint;
     private final AccessRequestFilter accessRequestFilter;
 
+    @Autowired
     public AccessSecurityConfig(AccessAuthenticationEntryPoint accessAuthenticationEntryPoint,
                                 AccessRequestFilter accessRequestFilter) {
         this.accessAuthenticationEntryPoint = accessAuthenticationEntryPoint;
@@ -25,7 +28,7 @@ public class AccessSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf().disable()
-                .authorizeRequests().antMatchers(UNPROTECTED_ENDPOINTS).permitAll()
+                .authorizeRequests().antMatchers(SecurityConfig.FREE_ENDPOINTS).permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .exceptionHandling().authenticationEntryPoint(accessAuthenticationEntryPoint)
@@ -36,11 +39,5 @@ public class AccessSecurityConfig extends WebSecurityConfigurerAdapter {
 
         httpSecurity.addFilterBefore(accessRequestFilter, UsernamePasswordAuthenticationFilter.class);
     }
-
-    private static final String[] UNPROTECTED_ENDPOINTS = {
-            "/access/log-in",
-            "/access/password/restore",
-            "/users/requesting"
-    };
 
 }

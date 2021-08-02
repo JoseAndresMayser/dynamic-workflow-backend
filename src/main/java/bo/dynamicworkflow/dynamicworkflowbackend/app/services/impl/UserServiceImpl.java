@@ -24,6 +24,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.ActionMapp
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.UserMapper;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.PasswordEncryptor;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.TimeUtility;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -43,29 +44,33 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final RoleActionRepository roleActionRepository;
     private final ActionRepository actionRepository;
+    private final DepartmentMemberRepository departmentMemberRepository;
     private final NotificationService notificationService;
 
     private final ActionMapper actionMapper = new ActionMapper();
     private final UserMapper userMapper = new UserMapper();
 
+    @Autowired
     public UserServiceImpl(UserRepository userRepository, UserActionRepository userActionRepository,
                            RoleRepository roleRepository, RoleActionRepository roleActionRepository,
-                           ActionRepository actionRepository, NotificationService notificationService) {
+                           ActionRepository actionRepository, DepartmentMemberRepository departmentMemberRepository,
+                           NotificationService notificationService) {
         this.userRepository = userRepository;
         this.userActionRepository = userActionRepository;
         this.roleRepository = roleRepository;
         this.roleActionRepository = roleActionRepository;
         this.actionRepository = actionRepository;
+        this.departmentMemberRepository = departmentMemberRepository;
         this.notificationService = notificationService;
     }
 
     @Override
     @Transactional(rollbackOn = {RoleException.class, ActionException.class})
     public UserResponseDto registerRequestingUser(UserRequestDto request) throws UserException, InvalidEmailException,
-            InvalidPasswordException, RoleException, ActionException {
+        InvalidPasswordException, RoleException, ActionException {
         User newRequestingUser = createNewUser(request, true);
-        Role role = roleRepository.getRoleByName(MainRole.REQUESTING_USER.name())
-                .orElseThrow(() -> new RoleNotFoundException("No se pudo encontrar el Rol \"REQUESTING_USER\""));
+        Role role = roleRepository.findByName(MainRole.REQUESTING_USER.name())
+            .orElseThrow(() -> new RoleNotFoundException("No se pudo encontrar el Rol \"REQUESTING_USER\""));
         List<RoleAction> roleActions = roleActionRepository.getAllByRoleId(role.getId());
         List<Integer> actionsId = roleActions.stream().map(RoleAction::getActionId).collect(Collectors.toList());
         Integer userId = newRequestingUser.getId();
@@ -77,8 +82,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(rollbackOn = ActionException.class)
-    public UserActionResponseDto registerUser(UserWithActionsIdRequestDto request) throws UserException,
-            InvalidEmailException, InvalidPasswordException, ActionException {
+    public UserActionResponseDto registerUser(CompleteUserRequestDto request) throws UserException,
+        InvalidEmailException, InvalidPasswordException, ActionException {
         User newUser = createNewUser(request.getUser(), false);
         List<Integer> actionsId = request.getActionsId();
         verifyActionsId(actionsId);
@@ -89,8 +94,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(rollbackOn = ActionException.class)
-    public UserActionResponseDto updateUser(UserWithActionsIdRequestDto request, Integer userId) throws UserException,
-            InvalidEmailException, InvalidPasswordException, ActionException {
+    public UserActionResponseDto updateUser(CompleteUserRequestDto request, Integer userId) throws UserException,
+        InvalidEmailException, InvalidPasswordException, ActionException {
         User user = getUserByUserId(userId);
         User updatedUser = updateUser(user, request.getUser());
         List<Integer> newActionsId = new ArrayList<>(request.getActionsId());
@@ -101,7 +106,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDto updateCurrentUser(UserRequestDto request) throws UserException, InvalidEmailException,
-            InvalidPasswordException {
+        InvalidPasswordException {
         User user = getUserByUserId(SessionHolder.getCurrentUserId());
         User updatedCurrentUser = updateUser(user, request);
         return userMapper.toDto(updatedCurrentUser);
@@ -115,7 +120,37 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserResponseDto> getAllUsers() {
-        List<User> users = userRepository.findAll();
+        List<User> users = internalGetAllUsers();
+        return userMapper.toDto(users);
+    }
+
+    @Override
+    public UserActionResponseDto getUserActionsByUserId(Integer userId) throws UserNotFoundException {
+        User user = getUserByUserId(userId);
+        List<UserAction> userActions = internalGetUserActionsByUserId(user.getId());
+        List<Action> actions = userActions.stream().map(UserAction::getAction).collect(Collectors.toList());
+        return new UserActionResponseDto(userMapper.toDto(user), actionMapper.toDto(actions));
+    }
+
+    @Override
+    public List<UserResponseDto> getNonDepartmentBosses() {
+        List<Integer> departmentBossesId = departmentMemberRepository.getAllActiveDepartmentBossMembers()
+            .stream()
+            .map(departmentBossMember -> departmentBossMember.getUser().getId())
+            .collect(Collectors.toList());
+        List<User> users = internalGetAllUsers();
+        users.removeIf(user -> departmentBossesId.contains(user.getId()));
+        return userMapper.toDto(users);
+    }
+
+    @Override
+    public List<UserResponseDto> getNonDepartmentMembers() {
+        List<Integer> departmentMembersId = departmentMemberRepository.getAllActiveDepartmentMembers()
+            .stream()
+            .map(DepartmentMember::getId)
+            .collect(Collectors.toList());
+        List<User> users = internalGetAllUsers();
+        users.removeIf(user -> departmentMembersId.contains(user.getId()));
         return userMapper.toDto(users);
     }
 
@@ -123,13 +158,13 @@ public class UserServiceImpl implements UserService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         try {
             User user = getOptionalUserByUsername(username)
-                    .orElseThrow(() -> new UserNotFoundException(
-                            String.format("No se pudo encontrar un Usuario con el username: %s", username)
-                    ));
+                .orElseThrow(() -> new UserNotFoundException(
+                    String.format("No se pudo encontrar un Usuario con el username: %s", username)
+                ));
             return new org.springframework.security.core.userdetails.User(
-                    user.getUsername(),
-                    user.getPassword(),
-                    new ArrayList<>()
+                user.getUsername(),
+                user.getPassword(),
+                new ArrayList<>()
             );
         } catch (Exception ex) {
             throw new UsernameNotFoundException("Usuario no encontrado con el username: ".concat(username), ex);
@@ -137,7 +172,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private User createNewUser(UserRequestDto request, Boolean isRequestingUser) throws UserException,
-            InvalidEmailException, InvalidPasswordException {
+        InvalidEmailException, InvalidPasswordException {
         verifyUsername(request.getUsername());
         verifyUserEmail(request.getEmail());
         String password = request.getPassword();
@@ -149,8 +184,8 @@ public class UserServiceImpl implements UserService {
         user.setPassword(hashedPassword);
         user.setStatus(status);
         Timestamp currentTimestamp = TimeUtility.getCurrentTimestamp();
-        user.setCreationDate(currentTimestamp);
-        user.setLastModifiedDate(currentTimestamp);
+        user.setCreationTimestamp(currentTimestamp);
+        user.setModificationTimestamp(currentTimestamp);
 
         return userRepository.saveAndFlush(user);
     }
@@ -167,7 +202,7 @@ public class UserServiceImpl implements UserService {
     private void verifyIfUserAlreadyExists(String username) throws UserAlreadyExistsException {
         if (getOptionalUserByUsername(username).isPresent())
             throw new UserAlreadyExistsException(
-                    String.format("Ya se encuentra registrado un Usuario con el username: %s", username)
+                String.format("Ya se encuentra registrado un Usuario con el username: %s", username)
             );
     }
 
@@ -187,7 +222,7 @@ public class UserServiceImpl implements UserService {
     private void verifyIfEmailBelongsToUser(String email) throws InvalidEmailException {
         if (getOptionalUserByEmail(email).isPresent())
             throw new InvalidEmailException(
-                    String.format("Ya se encuentra registrado un Usuario con el correo electrónico: %s", email)
+                String.format("Ya se encuentra registrado un Usuario con el correo electrónico: %s.", email)
             );
     }
 
@@ -223,9 +258,9 @@ public class UserServiceImpl implements UserService {
         List<UserAction> userActions = new ArrayList<>();
         for (Integer actionId : actionsId) {
             Action action = actionRepository.findById(actionId)
-                    .orElseThrow(() -> new ActionNotFoundException(
-                            String.format("No se pudo encontrar la Acción con Id: %d", actionId)
-                    ));
+                .orElseThrow(() -> new ActionNotFoundException(
+                    String.format("No se pudo encontrar la Acción con Id: %d", actionId)
+                ));
             UserAction newUserAction = new UserAction();
             newUserAction.setUserId(userId);
             newUserAction.setActionId(action.getId());
@@ -242,20 +277,20 @@ public class UserServiceImpl implements UserService {
     }
 
     private void verifyActionsIdWithoutAuthentication(List<Integer> actionsId) throws ActionException {
-        List<ActionCode> actionsCodeWithoutAuthentication = ActionCode.getActionsCodeWithoutAuth();
+        List<ActionCode> actionsCodeWithoutAuthentication = ActionCode.actionsWithoutAuth();
         for (ActionCode actionCode : actionsCodeWithoutAuthentication) {
             Action action = actionRepository.findByCode(actionCode)
-                    .orElseThrow(() -> new ActionNotFoundException(
-                            String.format("No se pudo encontrar la Acción con code: %s", actionCode.name())
-                    ));
+                .orElseThrow(() -> new ActionNotFoundException(
+                    String.format("No se pudo encontrar la Acción con code: %s", actionCode.name())
+                ));
             Integer actionId = action.getId();
             if (actionsId.contains(actionId))
                 throw new ActionWithoutAuthException(
-                        String.format(
-                                "El ID de acción: %d pertenece a la Acción con code: %s que no requiere autenticaión",
-                                actionId,
-                                actionCode.name()
-                        )
+                    String.format(
+                        "El ID de acción: %d pertenece a la Acción con code: %s que no requiere autenticaión",
+                        actionId,
+                        actionCode.name()
+                    )
                 );
         }
     }
@@ -266,13 +301,13 @@ public class UserServiceImpl implements UserService {
 
     private User getUserByUserId(Integer userId) throws UserNotFoundException {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(
-                        String.format("No se pudo encontrar un Ususario con ID: %d", userId)
-                ));
+            .orElseThrow(() -> new UserNotFoundException(
+                String.format("No se pudo encontrar un Usuario con ID: %d", userId)
+            ));
     }
 
     private User updateUser(User userToUpdate, UserRequestDto userRequest) throws UserException, InvalidEmailException,
-            InvalidPasswordException {
+        InvalidPasswordException {
         String newUsername = userRequest.getUsername();
         verifyIfUsernameIsNull(newUsername);
         if (!newUsername.equals(userToUpdate.getUsername())) verifyIfUserAlreadyExists(newUsername);
@@ -289,12 +324,12 @@ public class UserServiceImpl implements UserService {
             userToUpdate.setPassword(hashedPassword);
         }
         userToUpdate.setStatus(getStatusFromString(userRequest.getStatus()));
-        userToUpdate.setLastModifiedDate(TimeUtility.getCurrentTimestamp());
+        userToUpdate.setModificationTimestamp(TimeUtility.getCurrentTimestamp());
         userToUpdate.setNames(userRequest.getNames());
         userToUpdate.setFirstSurname(userRequest.getFirstSurname());
         userToUpdate.setSecondSurname(userRequest.getSecondSurname());
         userToUpdate.setEmail(newEmail);
-        userToUpdate.setPhoneNumber(userRequest.getPhoneNumber());
+        userToUpdate.setPhone(userRequest.getPhone());
         userToUpdate.setCode(userRequest.getCode());
 
         return userRepository.saveAndFlush(userToUpdate);
@@ -304,15 +339,19 @@ public class UserServiceImpl implements UserService {
         verifyActionsId(newActionsId);
         List<UserAction> userCurrentActions = internalGetUserActionsByUserId(userId);
         List<UserAction> userActionsToDelete = userCurrentActions
-                .stream()
-                .filter(userAction -> !newActionsId.remove(userAction.getActionId()))
-                .collect(Collectors.toList());
+            .stream()
+            .filter(userAction -> !newActionsId.remove(userAction.getActionId()))
+            .collect(Collectors.toList());
         userActionRepository.deleteAll(userActionsToDelete);
         registerUserActions(userId, newActionsId);
     }
 
     private List<UserAction> internalGetUserActionsByUserId(Integer userId) {
         return userActionRepository.getAllByUserId(userId);
+    }
+
+    private List<User> internalGetAllUsers() {
+        return userRepository.findAll();
     }
 
 }

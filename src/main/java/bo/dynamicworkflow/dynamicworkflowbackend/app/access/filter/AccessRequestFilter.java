@@ -2,7 +2,7 @@ package bo.dynamicworkflow.dynamicworkflowbackend.app.access.filter;
 
 import bo.dynamicworkflow.dynamicworkflowbackend.app.access.SessionHolder;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.access.token.TokenManager;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.access.token.exceptions.InvalidTokenException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.configs.SecurityConfig;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.UserService;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.UserAccountDto;
 import lombok.SneakyThrows;
@@ -19,12 +19,17 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class AccessRequestFilter extends OncePerRequestFilter {
 
     private final TokenManager tokenManager;
     private final UserService userService;
+
+    private static final String BEARER_PREFIX = "Bearer ";
+    private static final String AUTHORIZATION_KEY = "authorization";
 
     public AccessRequestFilter(TokenManager tokenManager, UserService userService) {
         this.tokenManager = tokenManager;
@@ -51,31 +56,55 @@ public class AccessRequestFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = request.getHeader("Authorization");
-        if (token != null && token.startsWith("Bearer ")) {
-            try {
-                String jwtToken = token.substring(7);
-                if (tokenManager.verifyToken(jwtToken)) {
-                    UserAccountDto account = tokenManager.getAccountFromToken(jwtToken, UserAccountDto.class);
-                    if (account != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                        SessionHolder.setCurrentUserId(account.getId());
-                        SessionHolder.setCurrentUsername(account.getUsername());
-                        SessionHolder.setCurrentUserAccount(account);
 
-                        UserDetails userDetails = userService.loadUserByUsername(account.getUsername());
-                        UsernamePasswordAuthenticationToken authenticationToken =
-                                new UsernamePasswordAuthenticationToken(
-                                        userDetails, null, userDetails.getAuthorities()
-                                );
-                        authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                    }
+        String urlEndpoint = request.getRequestURI().replaceFirst("/dynamic-workflow", "");
+        if (urlEndpoint.startsWith("/api")) {
+            List<String> unprotectedEndpoints = Arrays.asList(SecurityConfig.FREE_ENDPOINTS);
+            if (!unprotectedEndpoints.contains(urlEndpoint)) {
+                String token = request.getHeader(AUTHORIZATION_KEY);
+                UserAccountDto account = getAccountFromToken(token);
+                if (account == null || SecurityContextHolder.getContext().getAuthentication() != null) {
+                    response.getWriter().write("Unauthorized user.");
+                    response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                    return;
                 }
-            } catch (Exception e) {
-                throw new InvalidTokenException("Error al leer el Token: ".concat(e.getMessage()), e);
+                SessionHolder.setCurrentUserId(account.getId());
+                SessionHolder.setCurrentUsername(account.getUsername());
+                SessionHolder.setCurrentUserAccount(account);
+
+                UserDetails userDetails = this.userService.loadUserByUsername(account.getUsername());
+                UsernamePasswordAuthenticationToken authenticationToken =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities()
+                        );
+                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
         }
         filterChain.doFilter(request, response);
+    }
+
+    private UserAccountDto getAccountFromToken(String token) {
+        String jwtToken = getJwtToken(token);
+        if (jwtToken != null)
+            try {
+                return tokenManager.getAccountFromToken(jwtToken, UserAccountDto.class);
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+        return null;
+    }
+
+    private String getJwtToken(String token) {
+        if (token != null && token.startsWith(BEARER_PREFIX)) {
+            String jwtToken = token.replaceFirst(BEARER_PREFIX, "");
+            try {
+                if (tokenManager.verifyToken(jwtToken)) return jwtToken;
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+        }
+        return null;
     }
 
 }

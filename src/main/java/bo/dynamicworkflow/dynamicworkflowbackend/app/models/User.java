@@ -25,11 +25,11 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 
-    @Column(name = "creation_date", nullable = false)
-    private Timestamp creationDate;
+    @Column(name = "creation_timestamp", nullable = false)
+    private Timestamp creationTimestamp;
 
-    @Column(name = "last_modified_date", nullable = false)
-    private Timestamp lastModifiedDate;
+    @Column(name = "modification_timestamp", nullable = false)
+    private Timestamp modificationTimestamp;
 
     @Column(name = "names", nullable = false, length = 256)
     private String names;
@@ -40,11 +40,14 @@ public class User {
     @Column(name = "second_surname", length = 256)
     private String secondSurname;
 
-    @Column(name = "email", nullable = false, length = 256)
+    @Column(name = "email", nullable = false, length = 320)
     private String email;
 
-    @Column(name = "phone_number", nullable = false, length = 50)
-    private String phoneNumber;
+    @Column(name = "phone", nullable = false, length = 50)
+    private String phone;
+
+    @Column(name = "identification_number")
+    private Integer identificationNumber;
 
     @Column(name = "code", length = 50)
     private String code;
@@ -54,23 +57,15 @@ public class User {
     private void prePersistOrUpdate() {
         names = names.toUpperCase();
         firstSurname = firstSurname.toUpperCase();
-        if (secondSurname != null && secondSurname.equals("")) {
-            secondSurname = null;
-        }
-        if (secondSurname != null) {
-            secondSurname = secondSurname.toUpperCase();
-        }
+        if (secondSurname != null && secondSurname.equals("")) secondSurname = null;
+        if (secondSurname != null) secondSurname = secondSurname.toUpperCase();
         email = email.toLowerCase();
     }
 
     public String fullName() {
         StringBuilder fullName = new StringBuilder(names);
-        if (firstSurname != null) {
-            fullName.append(" ").append(firstSurname);
-        }
-        if (secondSurname != null) {
-            fullName.append(" ").append(secondSurname);
-        }
+        if (firstSurname != null) fullName.append(" ").append(firstSurname);
+        if (secondSurname != null) fullName.append(" ").append(secondSurname);
         return fullName.toString();
     }
 

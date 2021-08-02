@@ -5,9 +5,9 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class UserWithActionsIdRequestDto {
+public class UpdateDepartmentMembersRequestDto {
 
-    private UserRequestDto user;
-    private List<Integer> actionsId;
+    private Integer departmentBossId;
+    private List<Integer> analystMembersId;
 
 }

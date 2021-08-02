@@ -20,11 +20,11 @@ public class UserAction {
     private Integer actionId;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "action_id", insertable = false, updatable = false)
+    @JoinColumn(name = "action_id", referencedColumnName = "id", insertable = false, updatable = false)
     private Action action;
 
 }
