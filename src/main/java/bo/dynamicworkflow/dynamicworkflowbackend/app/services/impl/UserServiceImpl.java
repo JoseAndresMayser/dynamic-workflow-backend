@@ -6,7 +6,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.InvalidPasswordE
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.ActionException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.ActionNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.ActionWithoutAuthException;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.InvalidActionsIdListException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.InvalidActionIdListException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.role.RoleException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.role.RoleNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.user.*;
@@ -270,9 +270,9 @@ public class UserServiceImpl implements UserService {
     }
 
     private void verifyActionsId(List<Integer> actionsId) throws ActionException {
-        if (actionsId == null) throw new InvalidActionsIdListException("La lista de ID de acciones no debe ser nula.");
+        if (actionsId == null) throw new InvalidActionIdListException("La lista de ID de acciones no debe ser nula.");
         if (actionsId.isEmpty())
-            throw new InvalidActionsIdListException("La lista de ID de acciones debe contener al menos un elemento.");
+            throw new InvalidActionIdListException("La lista de ID de acciones debe contener al menos un elemento.");
         verifyActionsIdWithoutAuthentication(actionsId);
     }
 

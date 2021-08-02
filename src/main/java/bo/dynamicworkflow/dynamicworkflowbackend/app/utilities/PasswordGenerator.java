@@ -25,12 +25,10 @@ public final class PasswordGenerator {
     public char[] get() {
         Random random = new Random();
         char[] password = new char[passwordSize];
-        IntStream.range(0, passwordSize).forEach(
-                index -> {
-                    int randomInt = random.nextInt(charactersCount);
-                    password[index] = characters[randomInt];
-                }
-        );
+        IntStream.range(0, passwordSize).forEach(index -> {
+            int randomInt = random.nextInt(charactersCount);
+            password[index] = characters[randomInt];
+        });
         return password;
     }
 
