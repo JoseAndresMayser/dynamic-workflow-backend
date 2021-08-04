@@ -175,6 +175,13 @@ public class DepartmentServiceImpl implements DepartmentService {
         return departmentMapper.toDto(departments);
     }
 
+    @Override
+    public DepartmentResponseDto getRootDepartment() throws DepartmentNotFoundException {
+        Department rootDepartment = departmentRepository.findRootDepartment()
+                .orElseThrow(() -> new DepartmentNotFoundException("No se pudo encontrar el departamento raíz."));
+        return departmentMapper.toDto(rootDepartment);
+    }
+
     private void verifyDepartmentNameForParent(String departmentName, Integer parentDepartmentId,
                                                String oldDepartmentName) throws DepartmentException {
         verifyIfDepartmentNameIsNull(departmentName);

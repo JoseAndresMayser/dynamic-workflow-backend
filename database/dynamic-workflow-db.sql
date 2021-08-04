@@ -246,3 +246,13 @@ INSERT INTO user_actions(user_id, action_id)
 VALUES (1, 16);
 INSERT INTO user_actions(user_id, action_id)
 VALUES (1, 17);
+
+INSERT INTO actions(code, description)
+VALUES ('REQUEST_CREATE', 'Realizar nueva solicitud');
+
+
+INSERT INTO role_actions(role_id, action_id)
+VALUES (1, 19);
+
+INSERT INTO user_actions(user_id, action_id)
+VALUES (1, 19);

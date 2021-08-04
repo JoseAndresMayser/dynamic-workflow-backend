@@ -35,7 +35,11 @@ public enum ActionCode {
     DEPARTMENT_UPDATE,
     DEPARTMENT_UPDATE_MEMBERS,
     DEPARTMENT_GET,
-    DEPARTMENT_GET_ALL;
+    DEPARTMENT_GET_ALL,
+
+    PROCESS_CREATE,
+
+    REQUEST_CREATE;
 
     public static List<ActionCode> actionsWithoutAuth() {
         return new ArrayList<ActionCode>() {

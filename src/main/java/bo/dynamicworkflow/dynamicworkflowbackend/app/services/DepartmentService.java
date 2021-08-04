@@ -32,4 +32,6 @@ public interface DepartmentService {
 
     List<DepartmentResponseDto> getAllDepartmentsForCurrentUser() throws DepartmentMemberNotFoundException, DepartmentNotFoundException;
 
+    DepartmentResponseDto getRootDepartment() throws DepartmentNotFoundException;
+
 }
