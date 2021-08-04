@@ -78,4 +78,11 @@ public class DepartmentController {
         return new GeneralResponse(true, response, "Departamentos obtenidos exitosamente.");
     }
 
+    @GetMapping("/root")
+    @ResourceAction(enablerActions = ActionCode.REQUEST_CREATE)
+    public GeneralResponse getRootDepartment() throws DepartmentNotFoundException {
+        DepartmentResponseDto response = departmentService.getRootDepartment();
+        return new GeneralResponse(true, response, "Departamento raiz obtenido exitosamente.");
+    }
+
 }
