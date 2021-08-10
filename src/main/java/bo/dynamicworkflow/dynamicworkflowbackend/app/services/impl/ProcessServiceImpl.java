@@ -385,7 +385,7 @@ public class ProcessServiceImpl implements ProcessService {
                         processSchema
                 );
         }
-        verifyIfAllStagesAreBeingUsed(stageIndexesUsed, savedStages.size());
+        if (savedStages.size() > 1) verifyIfAllStagesAreBeingUsed(stageIndexesUsed, savedStages.size());
     }
 
     private List<Byte> getStageIndexesUsed(List<Stage> stages) {
