@@ -45,4 +45,12 @@ public interface DepartmentMemberRepository extends JpaRepository<DepartmentMemb
     @Query(value = "SELECT * FROM department_members dm WHERE dm.is_active IS TRUE", nativeQuery = true)
     List<DepartmentMember> getAllActiveDepartmentMembers();
 
+    @Query(
+            value = "SELECT * " +
+                    "FROM department_members dm " +
+                    "WHERE dm.department_id = :departmentId AND dm.is_active IS TRUE",
+            nativeQuery = true
+    )
+    List<DepartmentMember> getAllActiveDepartmentMembersByDepartmentId(@Param("departmentId") Integer departmentId);
+
 }

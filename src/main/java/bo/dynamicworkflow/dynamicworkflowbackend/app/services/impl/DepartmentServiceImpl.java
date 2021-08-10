@@ -19,8 +19,10 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.Compl
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.DepartmentRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.UpdateDepartmentMembersRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.CompleteDepartmentResponseDto;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.DepartmentMemberDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.DepartmentResponseDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.DepartmentMapper;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.DepartmentMemberMapper;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.UserMapper;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.TimeUtility;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +44,7 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     private final DepartmentMapper departmentMapper = new DepartmentMapper();
     private final UserMapper userMapper = new UserMapper();
+    private final DepartmentMemberMapper departmentMemberMapper = new DepartmentMemberMapper();
 
     @Autowired
     public DepartmentServiceImpl(DepartmentRepository departmentRepository, UserRepository userRepository,
@@ -71,7 +74,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         department.setStatus(status);
         Department registeredDepartment = departmentRepository.saveAndFlush(department);
         Integer departmentId = registeredDepartment.getId();
-        registerDepartmentBoss(departmentBossId, departmentId);
+        registerNewDepartmentBoss(departmentBossId, departmentId);
         List<Integer> analystMembersId = request.getAnalystMembersId();
         verifyAnalystMembersId(analystMembersId, departmentBossId);
         registerAnalystMembers(analystMembersId, departmentId);
@@ -176,6 +179,33 @@ public class DepartmentServiceImpl implements DepartmentService {
     }
 
     @Override
+    public List<DepartmentResponseDto> getDepartmentWithDescendantsById(Integer departmentId)
+            throws DepartmentNotFoundException {
+        Department department = getOptionalDepartmentById(departmentId)
+                .orElseThrow(() -> new DepartmentNotFoundException(departmentId));
+        List<Department> departments = new ArrayList<>();
+        fillListWithDepartments(departments, department);
+        return departmentMapper.toDto(departments);
+    }
+
+    @Override
+    public List<DepartmentMemberDto> getAllDepartmentMembersByDepartmentId(Integer departmentId)
+            throws DepartmentNotFoundException {
+        Department department = getOptionalDepartmentById(departmentId)
+                .orElseThrow(() -> new DepartmentNotFoundException(departmentId));
+        List<DepartmentMember> departmentMembers =
+                departmentMemberRepository.getAllActiveDepartmentMembersByDepartmentId(department.getId());
+        List<DepartmentMemberDto> response = new ArrayList<>();
+        departmentMembers.forEach(departmentMember -> {
+            DepartmentMemberDto departmentMemberDto = departmentMemberMapper.toDto(departmentMember);
+            departmentMemberDto.setUser(userMapper.toDto(departmentMember.getUser()));
+            departmentMemberDto.setDepartment(departmentMapper.toDto(departmentMember.getDepartment()));
+            response.add(departmentMemberDto);
+        });
+        return response;
+    }
+
+    @Override
     public DepartmentResponseDto getRootDepartment() throws DepartmentNotFoundException {
         Department rootDepartment = departmentRepository.findRootDepartment()
                 .orElseThrow(() -> new DepartmentNotFoundException("No se pudo encontrar el departamento raíz."));
@@ -260,10 +290,6 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     private Optional<User> getOptionalUserById(Integer userId) {
         return userRepository.findById(userId);
-    }
-
-    private void registerDepartmentBoss(Integer departmentBossId, Integer departmentId) {
-        registerNewDepartmentBoss(departmentBossId, departmentId);
     }
 
     private void registerNewDepartmentBoss(Integer newDepartmentBossId, Integer departmentId) {

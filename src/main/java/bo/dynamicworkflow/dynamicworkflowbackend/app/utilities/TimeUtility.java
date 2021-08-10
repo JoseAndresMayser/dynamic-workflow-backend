@@ -13,4 +13,12 @@ public class TimeUtility {
         return new Timestamp(new Date().getTime());
     }
 
+    public static Boolean isAfterAt(Timestamp timestampAfter, Timestamp initialTimestamp) {
+        return timestampAfter.after(initialTimestamp);
+    }
+
+    public static Boolean isAfterAtCurrentTimestamp(Timestamp timestampAfter) {
+        return isAfterAt(timestampAfter, getCurrentTimestamp());
+    }
+
 }

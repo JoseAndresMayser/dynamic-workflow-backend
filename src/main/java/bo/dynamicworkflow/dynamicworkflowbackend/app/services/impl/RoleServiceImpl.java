@@ -3,7 +3,7 @@ package bo.dynamicworkflow.dynamicworkflowbackend.app.services.impl;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.ActionException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.ActionNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.ActionWithoutAuthException;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.InvalidActionsIdListException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.action.InvalidActionIdListException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.role.*;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.Action;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.Role;
@@ -134,9 +134,9 @@ public class RoleServiceImpl implements RoleService {
     }
 
     private void verifyActionsId(List<Integer> actionsId) throws ActionException {
-        if (actionsId == null) throw new InvalidActionsIdListException("La lista de ID de acciones no debe ser nula.");
+        if (actionsId == null) throw new InvalidActionIdListException("La lista de ID de acciones no debe ser nula.");
         if (actionsId.isEmpty())
-            throw new InvalidActionsIdListException("La lista de ID de acciones debe contener al menos un elemento.");
+            throw new InvalidActionIdListException("La lista de ID de acciones debe contener al menos un elemento.");
         verifyActionsIdWithoutAuthentication(actionsId);
     }
 
