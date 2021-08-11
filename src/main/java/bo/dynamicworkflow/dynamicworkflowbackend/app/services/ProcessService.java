@@ -14,7 +14,8 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.stage.StageExcep
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.stageanalyst.StageAnalystException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.CompleteProcessRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.CompleteProcessResponseDto;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.ProcessDetailResponseDto;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.ProcessDetailedResponseDto;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.ProcessInputsResponseDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.ProcessResponseDto;
 
 import java.util.List;
@@ -26,8 +27,11 @@ public interface ProcessService {
             StageAnalystException, InputException, InputTypeNotFoundException, RestrictionException,
             SelectionInputValueException;
 
-    List<ProcessDetailResponseDto> getAllDetailedProcesses();
+    List<ProcessDetailedResponseDto> getAllDetailedProcesses();
 
-    List<ProcessResponseDto> getAllActiveProcessesByDepartmentId(Integer departmentId) throws DepartmentNotFoundException;
+    List<ProcessResponseDto> getAllActiveProcessesByDepartmentId(Integer departmentId)
+            throws DepartmentNotFoundException;
+
+    ProcessInputsResponseDto getProcessInputsByProcessId(Integer processId) throws ProcessException;
 
 }

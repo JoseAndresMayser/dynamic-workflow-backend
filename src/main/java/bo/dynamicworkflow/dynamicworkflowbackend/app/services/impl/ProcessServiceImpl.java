@@ -14,9 +14,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.input.InputExcep
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.input.InvalidInputListException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.input.InvalidInputNameException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.inputtype.InputTypeNotFoundException;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.process.InvalidProcessNameException;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.process.ProcessAlreadyExistsException;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.process.ProcessException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.process.*;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.restriction.InvalidRestrictionException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.restriction.InvalidRestrictionValueException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.restriction.RestrictionException;
@@ -36,9 +34,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.models.enums.ProcessStatus;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.*;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.ProcessService;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.*;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.CompleteProcessResponseDto;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.ProcessDetailResponseDto;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.ProcessResponseDto;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.*;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.*;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.TimeUtility;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,6 +68,9 @@ public class ProcessServiceImpl implements ProcessService {
     private final InputMapper inputMapper = new InputMapper();
     private final UserMapper userMapper = new UserMapper();
     private final DepartmentMapper departmentMapper = new DepartmentMapper();
+    private final InputRestrictionMapper inputRestrictionMapper = new InputRestrictionMapper();
+    private final SelectionInputValueMapper selectionInputValueMapper = new SelectionInputValueMapper();
+    private final InputTypeMapper inputTypeMapper = new InputTypeMapper();
 
     @Autowired
     public ProcessServiceImpl(DepartmentRepository departmentRepository,
@@ -114,10 +113,10 @@ public class ProcessServiceImpl implements ProcessService {
     }
 
     @Override
-    public List<ProcessDetailResponseDto> getAllDetailedProcesses() {
+    public List<ProcessDetailedResponseDto> getAllDetailedProcesses() {
         List<Process> processes = processRepository.findAll();
         return processes.stream()
-                .map(process -> new ProcessDetailResponseDto(
+                .map(process -> new ProcessDetailedResponseDto(
                         processMapper.toDto(process),
                         userMapper.toDto(process.getUser()),
                         departmentMapper.toDto(process.getDepartment())
@@ -133,6 +132,33 @@ public class ProcessServiceImpl implements ProcessService {
         List<Process> activeProcesses =
                 processRepository.getAllByDepartmentIdAndStatus(department.getId(), ProcessStatus.ACTIVE);
         return processMapper.toDto(activeProcesses);
+    }
+
+    @Override
+    public ProcessInputsResponseDto getProcessInputsByProcessId(Integer processId) throws ProcessException {
+        Process process = processRepository.findById(processId)
+                .orElseThrow(() -> new ProcessNotFoundException(processId));
+        if (process.getStatus().equals(ProcessStatus.INACTIVE)) throw new InactiveProcessException();
+        ProcessSchema processSchema = processSchemaRepository.findLastActiveByProcessId(process.getId())
+                .orElseThrow(InactiveProcessException::new);
+        List<Input> inputs = inputRepository.getAllByProcessSchemaId(processSchema.getId());
+        List<InputDetailedResponseDto> detailedInputs = new ArrayList<>();
+        inputs.forEach(input -> {
+            InputType inputType = input.getInputType();
+            InputDetailedResponseDto inputDetailed = new InputDetailedResponseDto();
+            inputDetailed.setInput(inputMapper.toDto(input));
+            inputDetailed.setInputType(inputTypeMapper.toDto(inputType));
+            Integer inputId = input.getId();
+            List<InputRestriction> inputRestrictions = inputRestrictionRepository.getAllByInputId(inputId);
+            if (inputRestrictions != null && !inputRestrictions.isEmpty())
+                inputDetailed.setRestrictions(inputRestrictionMapper.toDto(inputRestrictions));
+            if (isInputTypeWithSelectionValues(inputType.getName())) {
+                List<SelectionInputValue> selectionInputValues = selectionInputValueRepository.getAllByInputId(inputId);
+                inputDetailed.setSelectionInputValues(selectionInputValueMapper.toDto(selectionInputValues));
+            }
+            detailedInputs.add(inputDetailed);
+        });
+        return new ProcessInputsResponseDto(processMapper.toDto(process), detailedInputs);
     }
 
     private ProcessSchema saveProcessAndGetSchema(ProcessRequestDto processRequest) throws DepartmentException,
