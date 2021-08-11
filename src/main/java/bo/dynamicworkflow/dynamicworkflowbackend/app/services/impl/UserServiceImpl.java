@@ -145,12 +145,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserResponseDto> getNonDepartmentMembers() {
-        List<Integer> departmentMembersId = departmentMemberRepository.getAllActiveDepartmentMembers()
+        List<Integer> departmentMemberUserIds = departmentMemberRepository.getAllActiveDepartmentMembers()
             .stream()
-            .map(DepartmentMember::getId)
+            .map(DepartmentMember::getUserId)
             .collect(Collectors.toList());
         List<User> users = internalGetAllUsers();
-        users.removeIf(user -> departmentMembersId.contains(user.getId()));
+        users.removeIf(user -> departmentMemberUserIds.contains(user.getId()));
         return userMapper.toDto(users);
     }
 

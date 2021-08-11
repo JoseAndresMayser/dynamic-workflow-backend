@@ -4,8 +4,8 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.access.annotations.Resource
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.ForbiddenException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.TimestampException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.department.DepartmentException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.department.DepartmentNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.departmentmember.DepartmentMemberException;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.departmentmember.DepartmentMemberNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.input.InputException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.inputtype.InputTypeNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.process.ProcessException;
@@ -16,9 +16,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.stageanalyst.Sta
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.enums.ActionCode;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.ProcessService;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.CompleteProcessRequestDto;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.CompleteProcessResponseDto;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.GeneralResponse;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.ProcessDetailResponseDto;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,8 +46,24 @@ public class ProcessController {
     @GetMapping("/all")
     @ResourceAction(action = ActionCode.PROCESS_GET_ALL)
     public GeneralResponse getAllDetailedProcesses() {
-        List<ProcessDetailResponseDto> response = processService.getAllDetailedProcesses();
+        List<ProcessDetailedResponseDto> response = processService.getAllDetailedProcesses();
         return new GeneralResponse(true, response, "Procesos detallados obtenidos exitosamente.");
+    }
+
+    @GetMapping("/{departmentId}/all-active")
+    @ResourceAction(enablerActions = {ActionCode.REQUEST_REGISTER})
+    public GeneralResponse getAllActiveProcessesByDepartmentId(@PathVariable("departmentId") Integer departmentId)
+            throws DepartmentNotFoundException {
+        List<ProcessResponseDto> response = processService.getAllActiveProcessesByDepartmentId(departmentId);
+        return new GeneralResponse(true, response, "Procesos detallados obtenidos exitosamente.");
+    }
+
+    @GetMapping("/{processId}/inputs")
+    @ResourceAction(enablerActions = {ActionCode.REQUEST_REGISTER})
+    public GeneralResponse getProcessInputsByProcessId(@PathVariable("processId") Integer processId)
+            throws ProcessException {
+        ProcessInputsResponseDto response = processService.getProcessInputsByProcessId(processId);
+        return new GeneralResponse(true, response, "Entradas del proceso obtenidas exitosamente.");
     }
 
 }
