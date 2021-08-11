@@ -451,7 +451,6 @@ VALUES ('UPLOAD_FILE', 'Cargado de archivo');
 INSERT INTO input_types(name, description)
 VALUES ('DATE', 'Campo de fecha');
 
-
 INSERT INTO actions(code, description)
 VALUES ('PROCESS_GET_ALL', 'Ver todos los procesos');
 
@@ -462,10 +461,57 @@ INSERT INTO user_actions(user_id, action_id)
 VALUES (1, 19);
 
 INSERT INTO actions(code, description)
-VALUES ('REQUEST_CREATE', 'Realizar nueva solicitud');
+VALUES ('REQUEST_REGISTER', 'Realizar nueva solicitud');
 
 INSERT INTO role_actions(role_id, action_id)
 VALUES (1, 20);
 
 INSERT INTO user_actions(user_id, action_id)
 VALUES (1, 20);
+
+
+/* 5 - REQUESTS */
+
+DROP TABLE IF EXISTS requests CASCADE;
+
+DROP TABLE IF EXISTS request_input_values CASCADE;
+
+DROP TABLE IF EXISTS request_stages CASCADE;
+
+CREATE TABLE requests
+(
+    id                 SERIAL                   NOT NULL,
+    shipping_timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    finish_timestamp   TIMESTAMP WITH TIME ZONE,
+    status             VARCHAR(50)              NOT NULL,
+    code               VARCHAR(50)              NOT NULL,
+    process_id         INT                      NOT NULL,
+    user_id            INT                      NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (process_id) REFERENCES processes (id),
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+CREATE TABLE request_input_values
+(
+    id         SERIAL NOT NULL,
+    value      TEXT   NOT NULL,
+    input_id   INT    NOT NULL,
+    request_id INT    NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (input_id) REFERENCES inputs (id),
+    FOREIGN KEY (request_id) REFERENCES requests (id)
+);
+
+CREATE TABLE request_stages
+(
+    id               SERIAL                   NOT NULL,
+    entry_timestamp  TIMESTAMP WITH TIME ZONE NOT NULL,
+    finish_timestamp TIMESTAMP WITH TIME ZONE,
+    status           VARCHAR(50)              NOT NULL,
+    request_id       INT                      NOT NULL,
+    stage_id         INT                      NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (request_id) REFERENCES requests (id),
+    FOREIGN KEY (stage_id) REFERENCES stages (id)
+);
