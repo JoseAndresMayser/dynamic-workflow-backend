@@ -2,11 +2,16 @@ package bo.dynamicworkflow.dynamicworkflowbackend.app.notification.impl;
 
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.User;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.notification.NotificationService;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.notification.mailing.Attachment;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.notification.mailing.MailingService;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.IoUtility;
 import org.apache.commons.mail.EmailException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,6 +75,54 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
-    private static final String EMAIL_MESSAGE_FOOTER = "Saludos cordiales." + "\n\n" + "El equipo de DYNAMIC WORKFLOW";
+    @Override
+    public void sendNotificationToStageAnalysts(List<String> analystAddressees, String requestingFullName,
+                                                String processName, String requestCode, String requestFormFullPath) {
+        try {
+            String subject = "Nueva solicitud registrada: " + requestCode;
+            String message = "Estimad@s Analistas," + "\n" +
+                    "El usuario: " + requestingFullName + " ha registrado una nueva solicitud para el proceso: " +
+                    processName + ", se adjunta formulaio de solicitud, por favor revisar." + "\n" +
+                    "Código de la solicitud: " + requestCode + "\n" + EMAIL_MESSAGE_FOOTER;
+
+            File requestFormFile = new File(requestFormFullPath);
+            Attachment attachment = createAttachment(requestFormFile);
+            List<Attachment> attachments = new ArrayList<>();
+            attachments.add(attachment);
+            mailingService.sendEmailWithAttachments(analystAddressees, subject, message, attachments);
+        } catch (EmailException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void sendRegisteredNewRequestNotification(String requestingEmail, String processName, String requestCode,
+                                                     String requestFormFullPath) {
+        try {
+            String subject = "Nueva solicitud registrada: " + requestCode;
+            String message = "Estimad@ Usuari@," + "\n" +
+                    "Se ha registrado exitosamente su nueva solicitud para el proceso: " + processName +
+                    ", se adjunta formulaio de solicitud." + "\n" + "Código de la solicitud: " + requestCode + "\n" +
+                    EMAIL_MESSAGE_FOOTER;
+
+            List<String> addressees = new ArrayList<>();
+            addressees.add(requestingEmail);
+            File requestFormFile = new File(requestFormFullPath);
+            Attachment attachment = createAttachment(requestFormFile);
+            List<Attachment> attachments = new ArrayList<>();
+            attachments.add(attachment);
+            mailingService.sendEmailWithAttachments(addressees, subject, message, attachments);
+        } catch (EmailException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Attachment createAttachment(File file) throws IOException {
+        String fileName = IoUtility.getFileNameWithoutExtension(file);
+        String extension = IoUtility.getFileExtension(file);
+        return new Attachment(fileName, extension, Files.readAllBytes(file.toPath()));
+    }
+
+    private static final String EMAIL_MESSAGE_FOOTER = "Saludos cordiales." + "\n\n" + "El equipo de J-ADS";
 
 }

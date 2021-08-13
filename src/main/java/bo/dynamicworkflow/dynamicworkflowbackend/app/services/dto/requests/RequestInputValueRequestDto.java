@@ -6,6 +6,6 @@ import lombok.Data;
 public class RequestInputValueRequestDto {
 
     private Integer inputId;
-    private Object value;
+    private String value;
 
 }

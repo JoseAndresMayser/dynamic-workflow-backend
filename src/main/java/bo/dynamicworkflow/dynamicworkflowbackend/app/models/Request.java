@@ -25,8 +25,11 @@ public class Request {
     @Enumerated(EnumType.STRING)
     private RequestStatus status;
 
-    @Column(name = "code", nullable = false, length = 256)
+    @Column(name = "code", length = 50)
     private String code;
+
+    @Column(name = "form_path", length = 512)
+    private String formPath;
 
     @Column(name = "process_id", nullable = false)
     private Integer processId;

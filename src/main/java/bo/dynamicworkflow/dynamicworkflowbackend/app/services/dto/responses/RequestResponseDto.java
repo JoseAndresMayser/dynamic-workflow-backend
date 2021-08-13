@@ -17,6 +17,7 @@ public class RequestResponseDto {
     private Timestamp finishTimestamp;
     private RequestStatus status;
     private String code;
+    private String formPath;
     private Integer processId;
     private Integer userId;
 
