@@ -3,6 +3,7 @@ package bo.dynamicworkflow.dynamicworkflowbackend.app.services.impl;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.access.SessionHolder;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.DirectoryCreationException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.SaveFileException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.departmentmember.DepartmentMemberNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.input.InputException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.input.InputNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.input.InvalidInputValueException;
@@ -58,6 +59,8 @@ public class RequestServiceImpl implements RequestService {
     private final StageAnalystRepository stageAnalystRepository;
     private final RequestStageRepository requestStageRepository;
     private final UserRepository userRepository;
+    private final DepartmentMemberRepository departmentMemberRepository;
+    private final RequestActionRepository requestActionRepository;
 
     private final RequestFileManager requestFileManager;
     private final RequestFormGeneratorService requestFormGeneratorService;
@@ -74,7 +77,8 @@ public class RequestServiceImpl implements RequestService {
                               RequestInputValueRepository requestInputValueRepository,
                               StageRepository stageRepository, StageAnalystRepository stageAnalystRepository,
                               RequestStageRepository requestStageRepository, UserRepository userRepository,
-                              RequestFileManager requestFileManager,
+                              DepartmentMemberRepository departmentMemberRepository,
+                              RequestActionRepository requestActionRepository, RequestFileManager requestFileManager,
                               RequestFormGeneratorService requestFormGeneratorService,
                               NotificationService notificationService) {
         this.processRepository = processRepository;
@@ -88,6 +92,8 @@ public class RequestServiceImpl implements RequestService {
         this.stageAnalystRepository = stageAnalystRepository;
         this.requestStageRepository = requestStageRepository;
         this.userRepository = userRepository;
+        this.departmentMemberRepository = departmentMemberRepository;
+        this.requestActionRepository = requestActionRepository;
         this.requestFileManager = requestFileManager;
         this.requestFormGeneratorService = requestFormGeneratorService;
         this.notificationService = notificationService;
@@ -118,6 +124,37 @@ public class RequestServiceImpl implements RequestService {
         );
 
         return requestMapper.toDto(updatedRequest);
+    }
+
+    @Override
+    public List<RequestResponseDto> getAllRequestsFromCurrentUser() {
+        List<Request> requests = requestRepository.getAllByUserId(SessionHolder.getCurrentUserId());
+        return requestMapper.toDto(requests);
+    }
+
+    @Override
+    public List<RequestResponseDto> getPendingRequestsForCurrentAnalyst() throws DepartmentMemberNotFoundException {
+        DepartmentMember currentDepartmentMember =
+                departmentMemberRepository.findLastActiveAssignmentByUserId(SessionHolder.getCurrentUserId())
+                        .orElseThrow(() -> new DepartmentMemberNotFoundException(
+                                "El usuario actual no es Miembro activo de ningún Departamento."
+                        ));
+        List<StageAnalyst> stageAnalysts =
+                stageAnalystRepository.getAllByDepartmentMemberId(currentDepartmentMember.getId());
+        List<Request> requests = new ArrayList<>();
+        stageAnalysts.forEach(stageAnalyst -> {
+            Stage stage = stageAnalyst.getStage();
+            List<RequestStage> requestStages = requestStageRepository.getAllByStageId(stage.getId());
+            requestStages.stream()
+                    .filter(requestStage -> !requestStage.getStatus().equals(RequestStageStatus.FINISHED))
+                    .map(RequestStage::getRequest)
+                    .forEach(request -> {
+                        Optional<RequestAction> optionalRequestAction = requestActionRepository
+                                .findByRequestIdAndStageAnalystId(request.getId(), stageAnalyst.getId());
+                        if (!optionalRequestAction.isPresent()) requests.add(request);
+                    });
+        });
+        return requestMapper.toDto(requests);
     }
 
     private ProcessSchema getProcessSchemaOrFail(Integer processId) throws ProcessException {
@@ -313,7 +350,7 @@ public class RequestServiceImpl implements RequestService {
         Stage fistStage = getFirstStage(stages);
         RequestStage requestStage = new RequestStage();
         requestStage.setEntryTimestamp(TimeUtility.getCurrentTimestamp());
-        requestStage.setStatus(RequestStageStatus.ON_HOLD);
+        requestStage.setStatus(RequestStageStatus.PENDING);
         requestStage.setRequestId(request.getId());
         requestStage.setStageId(fistStage.getId());
         requestStageRepository.saveAndFlush(requestStage);

@@ -1,8 +1,9 @@
 package bo.dynamicworkflow.dynamicworkflowbackend.app.models.enums;
 
-public enum RequestStageStatus {
+public enum ExecutedAction {
 
-    PENDING,
-    FINISHED
+    APPROVE,
+    REJECT,
+    COMMENT
 
 }

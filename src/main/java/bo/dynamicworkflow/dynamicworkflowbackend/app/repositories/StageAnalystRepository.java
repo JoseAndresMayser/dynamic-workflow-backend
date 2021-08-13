@@ -11,4 +11,6 @@ public interface StageAnalystRepository extends JpaRepository<StageAnalyst, Inte
 
     List<StageAnalyst> getAllByStageId(Integer stageId);
 
+    List<StageAnalyst> getAllByDepartmentMemberId(Integer departmentMemberId);
+
 }
