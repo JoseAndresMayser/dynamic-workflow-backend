@@ -6,6 +6,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.ForbiddenExcepti
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.SaveFileException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.department.DepartmentNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.departmentmember.DepartmentMemberNotFoundException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.digitalcertificate.DigitalCertificateNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.digitalcertificate.InvalidCertificateFileException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.DepartmentMemberDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.DigitalCertificateRequestDto;
@@ -22,5 +23,8 @@ public interface DepartmentMemberService {
 
     List<DepartmentMemberDto> getAllDepartmentMembersByDepartmentId(Integer departmentId)
             throws DepartmentNotFoundException;
+
+    DigitalCertificateResponseDto getDigitalCertificateByDepartmentMemberId(Integer departmentMemberId)
+            throws DepartmentMemberNotFoundException, ForbiddenException, DigitalCertificateNotFoundException;
 
 }

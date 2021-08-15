@@ -7,6 +7,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.ForbiddenExcepti
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.SaveFileException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.department.DepartmentNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.departmentmember.DepartmentMemberNotFoundException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.digitalcertificate.DigitalCertificateNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.digitalcertificate.InvalidCertificateFileException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.enums.ActionCode;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.DepartmentMemberService;
@@ -48,6 +49,16 @@ public class DepartmentMemberController {
         List<DepartmentMemberDto> response =
                 departmentMemberService.getAllDepartmentMembersByDepartmentId(departmentId);
         return new GeneralResponse(true, response, "Miembros del Departamento obtenidos exitosamente.");
+    }
+
+    @GetMapping("/{departmentMemberId}/digital-certificate")
+    @ResourceAction(enablerActions = {ActionCode.DEPARTMENT_GET})
+    public GeneralResponse getDigitalCertificateByDepartmentMemberId(
+            @PathVariable("departmentMemberId") Integer departmentMemberId
+    ) throws DepartmentMemberNotFoundException, ForbiddenException, DigitalCertificateNotFoundException {
+        DigitalCertificateResponseDto response =
+                departmentMemberService.getDigitalCertificateByDepartmentMemberId(departmentMemberId);
+        return new GeneralResponse(true, response, "Certificado digital obtenido exitosamente.");
     }
 
 }
