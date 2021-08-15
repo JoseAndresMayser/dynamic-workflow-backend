@@ -542,10 +542,32 @@ CREATE TABLE request_actions
 );
 
 INSERT INTO actions(code, description)
-VALUES ('REQUEST_GET_ALL_PENDING_CURRENT_ANALYST', 'Ver solicitudes pendientes');
+VALUES ('REQUEST_EXECUTE_ACTION', 'Ejecutar acción sobre solicitud');
 
 INSERT INTO role_actions(role_id, action_id)
 VALUES (1, 22);
 
 INSERT INTO user_actions(user_id, action_id)
 VALUES (1, 22);
+
+DROP TABLE IF EXISTS digital_certificates CASCADE;
+
+CREATE TABLE digital_certificates
+(
+    id                     SERIAL                   NOT NULL,
+    path                   VARCHAR(512)             NOT NULL,
+    upload_timestamp       TIMESTAMP WITH TIME ZONE NOT NULL,
+    modification_timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    department_member_id   INT                      NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (department_member_id) REFERENCES department_members (id)
+);
+
+INSERT INTO actions(code, description)
+VALUES ('DEPARTMENT_MEMBER_UPLOAD_CERTIFICATE', 'Subir certificado digital');
+
+INSERT INTO role_actions(role_id, action_id)
+VALUES (1, 23);
+
+INSERT INTO user_actions(user_id, action_id)
+VALUES (1, 23);

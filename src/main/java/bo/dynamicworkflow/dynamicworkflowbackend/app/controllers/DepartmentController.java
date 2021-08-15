@@ -10,7 +10,6 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.user.UserExcepti
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.user.UserNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.enums.ActionCode;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.DepartmentService;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.DepartmentMemberDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.CompleteDepartmentRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.DepartmentRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.UpdateDepartmentMembersRequestDto;
@@ -66,7 +65,7 @@ public class DepartmentController {
     @GetMapping("/{departmentId}/complete")
     @ResourceAction(action = ActionCode.DEPARTMENT_GET)
     public GeneralResponse getCompleteDepartmentById(@PathVariable("departmentId") Integer departmentId)
-            throws DepartmentNotFoundException, DepartmentMemberNotFoundException, UserNotFoundException {
+            throws DepartmentNotFoundException, DepartmentMemberNotFoundException {
         CompleteDepartmentResponseDto response = departmentService.getCompleteDepartmentById(departmentId);
         return new GeneralResponse(true, response, "Departamento obtenido exitosamente.");
     }
@@ -89,14 +88,6 @@ public class DepartmentController {
                 response,
                 "Departamento con sus descendientes obtenidos exitosamente."
         );
-    }
-
-    @GetMapping("/{departmentId}/members")
-    @ResourceAction(enablerActions = {ActionCode.PROCESS_CREATE})
-    public GeneralResponse getAllDepartmentMembersByDepartmentId(@PathVariable("departmentId") Integer departmentId)
-            throws DepartmentNotFoundException {
-        List<DepartmentMemberDto> response = departmentService.getAllDepartmentMembersByDepartmentId(departmentId);
-        return new GeneralResponse(true, response, "Miembros del Departamento obtenidos exitosamente.");
     }
 
     @GetMapping("/root")

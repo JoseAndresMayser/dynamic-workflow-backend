@@ -4,30 +4,37 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.access.SessionHolder;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.DirectoryCreationException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.SaveFileException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.departmentmember.DepartmentMemberNotFoundException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.digitalcertificate.DigitalCertificateNotFoundException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.digitalcertificate.InvalidDigitalCertificatePasswordException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.input.InputException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.input.InputNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.input.InvalidInputValueException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.process.InactiveProcessException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.process.ProcessException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.process.ProcessNotFoundException;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.request.DuplicateRequestInputValueException;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.request.RequestException;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.request.RequestFormGenerationException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.request.*;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.requeststage.FinishedRequestStageException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.requeststage.RequestStageException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.requeststage.RequestStageNotFoundException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.stageanalyst.InvalidStageAnalystException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.stageanalyst.NoRequiresApprovalException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.stageanalyst.RequiresApprovalException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.stageanalyst.StageAnalystException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.user.UserNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.*;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.Process;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.models.enums.ExecutedAction;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.enums.ProcessStatus;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.enums.RequestStageStatus;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.enums.RequestStatus;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.notification.NotificationService;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.*;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.RequestFormGeneratorService;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.RequestFormService;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.RequestService;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.FileInputValueRequestDto;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.NewRequestRequestDto;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.RequestInputValueRequestDto;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.SelectionBoxInputValuesRequestDto;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.*;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.RequestActionResponseDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.RequestResponseDto;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.RequestActionMapper;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.RequestMapper;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.Base64Utility;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.TimeUtility;
@@ -61,13 +68,15 @@ public class RequestServiceImpl implements RequestService {
     private final UserRepository userRepository;
     private final DepartmentMemberRepository departmentMemberRepository;
     private final RequestActionRepository requestActionRepository;
+    private final DigitalCertificateRepository digitalCertificateRepository;
 
     private final RequestFileManager requestFileManager;
-    private final RequestFormGeneratorService requestFormGeneratorService;
+    private final RequestFormService requestFormService;
     private final NotificationService notificationService;
 
     private final Gson gson = new Gson();
     private final RequestMapper requestMapper = new RequestMapper();
+    private final RequestActionMapper requestActionMapper = new RequestActionMapper();
 
     @Autowired
     public RequestServiceImpl(ProcessRepository processRepository, ProcessSchemaRepository processSchemaRepository,
@@ -78,8 +87,9 @@ public class RequestServiceImpl implements RequestService {
                               StageRepository stageRepository, StageAnalystRepository stageAnalystRepository,
                               RequestStageRepository requestStageRepository, UserRepository userRepository,
                               DepartmentMemberRepository departmentMemberRepository,
-                              RequestActionRepository requestActionRepository, RequestFileManager requestFileManager,
-                              RequestFormGeneratorService requestFormGeneratorService,
+                              RequestActionRepository requestActionRepository,
+                              DigitalCertificateRepository digitalCertificateRepository,
+                              RequestFileManager requestFileManager, RequestFormService requestFormService,
                               NotificationService notificationService) {
         this.processRepository = processRepository;
         this.processSchemaRepository = processSchemaRepository;
@@ -94,8 +104,9 @@ public class RequestServiceImpl implements RequestService {
         this.userRepository = userRepository;
         this.departmentMemberRepository = departmentMemberRepository;
         this.requestActionRepository = requestActionRepository;
+        this.digitalCertificateRepository = digitalCertificateRepository;
         this.requestFileManager = requestFileManager;
-        this.requestFormGeneratorService = requestFormGeneratorService;
+        this.requestFormService = requestFormService;
         this.notificationService = notificationService;
     }
 
@@ -127,7 +138,35 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
-    public List<RequestResponseDto> getAllRequestsFromCurrentUser() {
+    @Transactional(rollbackOn = {DigitalCertificateNotFoundException.class, DirectoryCreationException.class,
+            SaveFileException.class, RequestFormSigningException.class, RequestStageNotFoundException.class})
+    public RequestActionResponseDto executeActionOnRequest(RequestActionRequestDto request, Integer requestId)
+            throws RequestException, InvalidDigitalCertificatePasswordException, StageAnalystException,
+            InactiveProcessException, DepartmentMemberNotFoundException,
+            RequestStageException, DigitalCertificateNotFoundException {
+        Request requestModel = requestRepository.findById(requestId)
+                .orElseThrow(() -> new RequestNotFoundException(requestId));
+        if (!requestModel.getStatus().equals(RequestStatus.IN_PROCESS))
+            throw new InvalidRequestStatusException(
+                    "No se puede ejecutar una acción sobre la solicitud debido a que no se encuentra EN PROCESO."
+            );
+        StageAnalyst stageAnalyst = getStageAnalystForCurrentUserOrFail(requestModel);
+        RequestAction requestAction;
+        switch (request.getExecutedAction()) {
+            case APPROVE:
+                requestAction = approveRequest(request, stageAnalyst, requestModel);
+                break;
+            case REJECT:
+                requestAction = rejectRequest(request, stageAnalyst, requestModel);
+                break;
+            default:
+                requestAction = commentRequest(request, stageAnalyst, requestModel);
+        }
+        return requestActionMapper.toDto(requestAction);
+    }
+
+    @Override
+    public List<RequestResponseDto> getAllRequestsForCurrentUser() {
         List<Request> requests = requestRepository.getAllByUserId(SessionHolder.getCurrentUserId());
         return requestMapper.toDto(requests);
     }
@@ -160,6 +199,10 @@ public class RequestServiceImpl implements RequestService {
     private ProcessSchema getProcessSchemaOrFail(Integer processId) throws ProcessException {
         Process process = processRepository.findById(processId)
                 .orElseThrow(() -> new ProcessNotFoundException(processId));
+        return verifyProcessAndGetSchema(process);
+    }
+
+    private ProcessSchema verifyProcessAndGetSchema(Process process) throws InactiveProcessException {
         if (process.getStatus().equals(ProcessStatus.INACTIVE)) throw new InactiveProcessException();
         Optional<ProcessSchema> optionalProcessSchema =
                 processSchemaRepository.findLastActiveByProcessId(process.getId());
@@ -303,9 +346,9 @@ public class RequestServiceImpl implements RequestService {
 
     private String getFilePathValue(String value, String inputName, Request request) throws InvalidInputValueException,
             DirectoryCreationException, SaveFileException {
-        FileInputValueRequestDto fileInputValueRequest;
+        FileRequestDto fileInputValueRequest;
         try {
-            fileInputValueRequest = gson.fromJson(value, FileInputValueRequestDto.class);
+            fileInputValueRequest = gson.fromJson(value, FileRequestDto.class);
         } catch (JsonSyntaxException exception) {
             throw new InvalidInputValueException(
                     "El valor de la entrada es incorrecto, se esperaba un formato de entrada de tipo ARCHIVO."
@@ -329,9 +372,9 @@ public class RequestServiceImpl implements RequestService {
 
     private Request generateAndSaveRequestForm(String processName, Request request, User user)
             throws RequestFormGenerationException, SaveFileException, DirectoryCreationException {
-        byte[] requestFormContent = requestFormGeneratorService.generateRequestForm(processName, request, user);
+        byte[] requestFormContent = requestFormService.generateRequestForm(processName, request, user);
         SaveFileRequest requestFormFile = new SaveFileRequest(
-                "Formulario de solicitud-" + request.getCode() + "-(sin firmar)",
+                "Formulario de solicitud-" + request.getCode(),
                 Base64Utility.encodeAsString(requestFormContent),
                 "pdf"
         );
@@ -348,13 +391,26 @@ public class RequestServiceImpl implements RequestService {
                                                  String processName) {
         List<Stage> stages = stageRepository.getAllByProcessSchemaId(processSchemaId);
         Stage fistStage = getFirstStage(stages);
+        goToStageAndNotifyAnalysts(request, fistStage.getId(), userFullName, processName);
+    }
+
+    private Stage getFirstStage(List<Stage> stages) {
+        Stage fistStage = stages.get(0);
+        for (int index = 1; index < stages.size(); index++) {
+            Stage stage = stages.get(index);
+            if (stage.getStageIndex() < fistStage.getStageIndex()) fistStage = stage;
+        }
+        return fistStage;
+    }
+
+    private void goToStageAndNotifyAnalysts(Request request, Integer stageId, String userFullName, String processName) {
         RequestStage requestStage = new RequestStage();
         requestStage.setEntryTimestamp(TimeUtility.getCurrentTimestamp());
         requestStage.setStatus(RequestStageStatus.PENDING);
         requestStage.setRequestId(request.getId());
-        requestStage.setStageId(fistStage.getId());
+        requestStage.setStageId(stageId);
         requestStageRepository.saveAndFlush(requestStage);
-        List<StageAnalyst> stageAnalysts = stageAnalystRepository.getAllByStageId(fistStage.getId());
+        List<StageAnalyst> stageAnalysts = stageAnalystRepository.getAllByStageId(stageId);
         List<String> analystEmails = stageAnalysts.stream()
                 .map(stageAnalyst -> stageAnalyst.getDepartmentMember().getUser())
                 .map(User::getEmail)
@@ -368,13 +424,184 @@ public class RequestServiceImpl implements RequestService {
         );
     }
 
-    private Stage getFirstStage(List<Stage> stages) {
-        Stage fistStage = stages.get(0);
-        for (int index = 1; index < stages.size(); index++) {
-            Stage stage = stages.get(index);
-            if (stage.getStageIndex() < fistStage.getStageIndex()) fistStage = stage;
+    private StageAnalyst getStageAnalystForCurrentUserOrFail(Request request) throws InactiveProcessException,
+            InvalidStageAnalystException, DepartmentMemberNotFoundException, ActionOnRequestAlreadyExecutedException,
+            RequestStageException {
+        ProcessSchema processSchema = verifyProcessAndGetSchema(request.getProcess());
+        List<Stage> stages = stageRepository.getAllByProcessSchemaId(processSchema.getId());
+        Integer requestId = request.getId();
+        StageAnalyst stageAnalyst = getStageAnalystFromStages(stages);
+        if (requestActionRepository.findByRequestIdAndStageAnalystId(requestId, stageAnalyst.getId()).isPresent())
+            throw new ActionOnRequestAlreadyExecutedException();
+        RequestStage requestStage =
+                requestStageRepository.findByRequestIdAndStageId(requestId, stageAnalyst.getStage().getId())
+                        .orElseThrow(() -> new RequestStageNotFoundException(
+                                "La solicitud aún no se encuentra en la etapa donde el usuario actual es analista."
+                        ));
+        if (requestStage.getStatus().equals(RequestStageStatus.FINISHED))
+            throw new FinishedRequestStageException("La etapa en la que el usuario actual es analista ya finalizó");
+        return stageAnalyst;
+    }
+
+    private StageAnalyst getStageAnalystFromStages(List<Stage> stages)
+            throws DepartmentMemberNotFoundException, InvalidStageAnalystException {
+        DepartmentMember currentDepartmentMember = getCurrentDepartmentMember();
+        for (Stage stage : stages) {
+            Optional<StageAnalyst> optionalStageAnalyst = stageAnalystRepository.findByStageIdAndDepartmentMemberId(
+                    stage.getId(),
+                    currentDepartmentMember.getId()
+            );
+            if (optionalStageAnalyst.isPresent()) return optionalStageAnalyst.get();
         }
-        return fistStage;
+        throw new InvalidStageAnalystException(
+                "El usuario actual no es analista de ninguna de las etapas del proceso donde pertenece " +
+                        "la solicitud en la que se quiere ejecutar la acción."
+        );
+    }
+
+    private DepartmentMember getCurrentDepartmentMember() throws DepartmentMemberNotFoundException {
+        return departmentMemberRepository.findLastActiveAssignmentByUserId(SessionHolder.getCurrentUserId())
+                .orElseThrow(() -> new DepartmentMemberNotFoundException(
+                        "El usuario actual no es Miembro activo de ningún Departamento."
+                ));
+    }
+
+    private RequestAction approveRequest(RequestActionRequestDto requestDto, StageAnalyst stageAnalyst, Request request)
+            throws InvalidDigitalCertificatePasswordException, NoRequiresApprovalException,
+            DigitalCertificateNotFoundException, RequestFormSigningException, RequestStageNotFoundException {
+        String digitalCertificatePassword = requestDto.getDigitalCertificatePassword();
+        if (digitalCertificatePassword == null || digitalCertificatePassword.isEmpty())
+            throw new InvalidDigitalCertificatePasswordException(
+                    "La contraseña del certificado digital es requerida para aprobar una solicitud."
+            );
+        if (!stageAnalyst.getRequiresApproval())
+            throw new NoRequiresApprovalException("El analista actual no tiene permisos para APROBAR la solicitud.");
+        RequestAction requestAction = saveNewRequestAction(requestDto, request.getId(), stageAnalyst.getId());
+        signRequestForm(stageAnalyst.getDepartmentMember(), request, digitalCertificatePassword);
+        goToNextStageIfNecessary(stageAnalyst.getStage(), request);
+        return requestAction;
+    }
+
+    private RequestAction saveNewRequestAction(RequestActionRequestDto request, Integer requestId,
+                                               Integer stageAnalystId) {
+        RequestAction requestAction = requestActionMapper.toEntity(request);
+        requestAction.setExecutionTimestamp(TimeUtility.getCurrentTimestamp());
+        requestAction.setRequestId(requestId);
+        requestAction.setStageAnalystId(stageAnalystId);
+        return requestActionRepository.saveAndFlush(requestAction);
+    }
+
+    private void signRequestForm(DepartmentMember currentDepartmentMember, Request request,
+                                 String digitalCertificatePassword) throws DigitalCertificateNotFoundException,
+            RequestFormSigningException {
+        DigitalCertificate digitalCertificate =
+                digitalCertificateRepository.findByDepartmentMemberId(currentDepartmentMember.getId())
+                        .orElseThrow(() -> new DigitalCertificateNotFoundException(
+                                "El analista actual no tiene configurado su certificado digital."
+                        ));
+        requestFormService.signRequestForm(
+                requestFileManager.getAbsolutePath(digitalCertificate.getPath()),
+                digitalCertificatePassword,
+                requestFileManager.getAbsolutePath(request.getFormPath())
+        );
+    }
+
+    private void goToNextStageIfNecessary(Stage currentStage, Request request) throws RequestStageNotFoundException {
+        List<StageAnalyst> stageAnalysts = stageAnalystRepository.getAllByStageId(currentStage.getId());
+        Integer mandatoryApprovalsAmount = 0;
+        Integer executedMandatoryApprovalsAmount = 0;
+        Integer executedNonMandatoryApprovalsAmount = 0;
+        for (StageAnalyst stageAnalyst : stageAnalysts)
+            if (stageAnalyst.getRequiresApproval()) {
+                Optional<RequestAction> optionalRequestAction =
+                        requestActionRepository.findByRequestIdAndStageAnalystId(request.getId(), stageAnalyst.getId());
+                if (stageAnalyst.getApprovalIsMandatory()) {
+                    mandatoryApprovalsAmount++;
+                    if (optionalRequestAction.isPresent() &&
+                            optionalRequestAction.get().getExecutedAction().equals(ExecutedAction.APPROVE))
+                        executedMandatoryApprovalsAmount++;
+                } else {
+                    if (optionalRequestAction.isPresent() &&
+                            optionalRequestAction.get().getExecutedAction().equals(ExecutedAction.APPROVE))
+                        executedNonMandatoryApprovalsAmount++;
+                }
+            }
+
+        Integer approvalsRequired = currentStage.getApprovalsRequired();
+        if (executedMandatoryApprovalsAmount.equals(mandatoryApprovalsAmount)) {
+            Integer currentStageId = currentStage.getId();
+            if (executedMandatoryApprovalsAmount.equals(approvalsRequired)) {
+                finalizeCurrentStage(request, currentStageId);
+                goToNextStageIfPossible(currentStage, request);
+            } else {
+                Integer executedApprovalsAmount = executedMandatoryApprovalsAmount +
+                        executedNonMandatoryApprovalsAmount;
+                if (executedApprovalsAmount.equals(approvalsRequired)) {
+                    finalizeCurrentStage(request, currentStageId);
+                    goToNextStageIfPossible(currentStage, request);
+                }
+            }
+        }
+    }
+
+    private void finalizeCurrentStage(Request request, Integer currentStageId) throws RequestStageNotFoundException {
+        RequestStage requestStage = requestStageRepository.findByRequestIdAndStageId(request.getId(), currentStageId)
+                .orElseThrow(() -> new RequestStageNotFoundException(
+                        "No se pudo encontrar la etapa actual en la que se encuentra la solicitud."
+                ));
+        requestStage.setFinishTimestamp(TimeUtility.getCurrentTimestamp());
+        requestStage.setStatus(RequestStageStatus.FINISHED);
+        requestStageRepository.saveAndFlush(requestStage);
+    }
+
+    private void goToNextStageIfPossible(Stage currentStage, Request request) {
+        Stage nextStage = currentStage.getNextStage();
+        if (nextStage == null) {
+            finalizeRequest(request, RequestStatus.APPROVED);
+            return;
+        }
+        goToStageAndNotifyAnalysts(
+                request,
+                nextStage.getId(),
+                request.getUser().fullName(),
+                request.getProcess().getName()
+        );
+    }
+
+    private void finalizeRequest(Request request, RequestStatus requestStatus) {
+        request.setFinishTimestamp(TimeUtility.getCurrentTimestamp());
+        request.setStatus(requestStatus);
+        requestRepository.saveAndFlush(request);
+        notificationService.sendRequestCompletionNotification(
+                request.getCode(),
+                request.getProcess().getName(),
+                RequestStatus.getHumanReadableFormat(requestStatus),
+                request.getUser().getEmail()
+        );
+    }
+
+    private RequestAction rejectRequest(RequestActionRequestDto requestDto, StageAnalyst stageAnalyst, Request request)
+            throws InvalidCommentaryException, NoRequiresApprovalException, RequestStageNotFoundException {
+        verifyCommentary(requestDto.getCommentary());
+        if (!stageAnalyst.getRequiresApproval())
+            throw new NoRequiresApprovalException("El analista actual no tiene permisos para RECHAZAR la solicitud.");
+        RequestAction requestAction = saveNewRequestAction(requestDto, request.getId(), stageAnalyst.getId());
+        finalizeCurrentStage(request, stageAnalyst.getStageId());
+        finalizeRequest(request, RequestStatus.REJECTED);
+        return requestAction;
+    }
+
+    private void verifyCommentary(String commentary) throws InvalidCommentaryException {
+        if (commentary == null || commentary.isEmpty())
+            throw new InvalidCommentaryException("El comentario es requerido.");
+    }
+
+    private RequestAction commentRequest(RequestActionRequestDto requestDto, StageAnalyst stageAnalyst,
+                                         Request request) throws InvalidCommentaryException, RequiresApprovalException {
+        verifyCommentary(requestDto.getCommentary());
+        if (stageAnalyst.getRequiresApproval())
+            throw new RequiresApprovalException("Se requiere APROBACIÓN del analista actual.");
+        return saveNewRequestAction(requestDto, request.getId(), stageAnalyst.getId());
     }
 
 }

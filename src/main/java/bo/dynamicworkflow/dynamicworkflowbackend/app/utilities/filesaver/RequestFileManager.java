@@ -22,8 +22,8 @@ public class RequestFileManager extends FileManager {
         return saveFile(requestRelativePath, requestFile);
     }
 
-    private String getRequestRelativePath(Timestamp requestShippingTimestamp, Integer requestId) {
-        String requestsPath = SEPARATOR.concat(fileStorageConfig.getRequestsPath());
+    public String getRequestRelativePath(Timestamp requestShippingTimestamp, Integer requestId) {
+        String requestsPath = SEPARATOR.concat(super.fileStorageConfig.getRequestsPath());
         String requestsTimestampPath = getPathWithEntityTimestamp(requestShippingTimestamp, requestId);
         return requestsPath.concat(requestsTimestampPath);
     }

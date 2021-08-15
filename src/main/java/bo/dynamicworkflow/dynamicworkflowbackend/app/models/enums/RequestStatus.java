@@ -4,6 +4,16 @@ public enum RequestStatus {
 
     IN_PROCESS,
     APPROVED,
-    REJECTED
+    REJECTED;
+
+    public static String getHumanReadableFormat(RequestStatus requestStatus) {
+        switch (requestStatus) {
+            case APPROVED:
+                return "APROBADA";
+            case REJECTED:
+                return "RECHAZADA";
+        }
+        return "";
+    }
 
 }

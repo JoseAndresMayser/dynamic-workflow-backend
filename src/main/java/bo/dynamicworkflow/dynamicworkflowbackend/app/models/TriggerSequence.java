@@ -17,10 +17,10 @@ public class TriggerSequence {
     private Boolean hasNextStage;
 
     @Column(name = "current_stage_index", nullable = false)
-    private Byte currentStageIndex;
+    private Integer currentStageIndex;
 
     @Column(name = "next_stage_index")
-    private Byte nextStageIndex;
+    private Integer nextStageIndex;
 
     @Column(name = "selection_input_value_id", nullable = false)
     private Integer selectionInputValueId;

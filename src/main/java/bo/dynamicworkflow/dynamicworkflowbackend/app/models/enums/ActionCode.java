@@ -33,7 +33,9 @@ public enum ActionCode {
 
     REQUEST_REGISTER,
     REQUEST_GET_ALL_CURRENT_USER,
-    REQUEST_GET_ALL_PENDING_CURRENT_ANALYST;
+    REQUEST_EXECUTE_ACTION,
+
+    DEPARTMENT_MEMBER_UPLOAD_CERTIFICATE;
 
     public static List<ActionCode> actionsWithoutAuth() {
         return new ArrayList<ActionCode>() {

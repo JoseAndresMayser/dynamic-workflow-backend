@@ -1,5 +1,6 @@
 package bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses;
 
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.DepartmentMemberDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,7 +13,7 @@ import java.util.List;
 public class CompleteDepartmentResponseDto {
 
     private DepartmentResponseDto department;
-    private UserResponseDto departmentBoss;
-    private List<UserResponseDto> analystMembers;
+    private DepartmentMemberDto departmentBoss;
+    private List<DepartmentMemberDto> analystMembers;
 
 }

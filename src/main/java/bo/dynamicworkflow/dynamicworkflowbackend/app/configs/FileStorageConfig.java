@@ -11,10 +11,10 @@ public class FileStorageConfig {
     @Value("${file.storage.path.base}")
     private String basePath;
 
-    @Value("${file.storage.path.department-members}")
-    private String departmentMembersPath;
-
     @Value("${file.storage.path.requests}")
     private String requestsPath;
+
+    @Value("${file.storage.path.department-member-certificates}")
+    private String departmentMemberCertificatesPath;
 
 }

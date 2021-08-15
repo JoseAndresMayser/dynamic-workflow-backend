@@ -36,6 +36,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.services.ProcessService;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.*;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.*;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.*;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.shared.DepartmentHandler;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.TimeUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -183,7 +184,7 @@ public class ProcessServiceImpl implements ProcessService {
         Department assignedDepartment = departmentMember.getDepartment();
         if (assignedDepartment == null)
             throw new DepartmentNotFoundException("No se pudo encontrar el departamento asignado al usuario actual.");
-        if (!hasPermitsInDepartment(assignedDepartment, department.getId()))
+        if (!DepartmentHandler.hasPermitsInDepartment(assignedDepartment, department.getId()))
             throw new ForbiddenException(
                     "El usuario actual no tiene permisos para crear un proceso en el departamento indicado."
             );
@@ -195,15 +196,6 @@ public class ProcessServiceImpl implements ProcessService {
         process.setModificationTimestamp(currentTimestamp);
         process.setUserId(SessionHolder.getCurrentUserId());
         return processRepository.saveAndFlush(process);
-    }
-
-    private Boolean hasPermitsInDepartment(Department department, Integer departmentIdToVerify) {
-        if (department.getId().equals(departmentIdToVerify)) return true;
-        List<Department> subordinateDepartments = department.getSubordinateDepartments();
-        if (subordinateDepartments != null && !subordinateDepartments.isEmpty())
-            for (Department subordinateDepartment : subordinateDepartments)
-                if (hasPermitsInDepartment(subordinateDepartment, departmentIdToVerify)) return true;
-        return false;
     }
 
     private void verifyIfProcessExists(String processName, Integer departmentId) throws ProcessException {
@@ -274,18 +266,18 @@ public class ProcessServiceImpl implements ProcessService {
             throws StageException {
         verifyIfStageExists(stageRequest, processSchemaId);
         verifyApprovalsRequired(stageRequest);
-        Byte stageIndex = stageRequest.getStageIndex();
+        Integer stageIndex = stageRequest.getStageIndex();
         if (stageIndex < 1) throw new InvalidStageIndexException("El índice de la etapa no debe ser menor a 1.");
         if (stageIndex > stagesAmount)
             throw new InvalidStageIndexException(
                     "El índice de la etapa no debe ser mayor a la cantidad de etapas a registrar."
             );
-        Byte previousStageIndex = stageRequest.getPreviousStageIndex();
+        Integer previousStageIndex = stageRequest.getPreviousStageIndex();
         if (previousStageIndex != null && previousStageIndex >= stageIndex)
             throw new InvalidStageIndexException(
                     "El índice de la etapa anterior no debe ser mayor o igual al índice de la etapa actual."
             );
-        Byte nextStageIndex = stageRequest.getNextStageIndex();
+        Integer nextStageIndex = stageRequest.getNextStageIndex();
         if (nextStageIndex != null && nextStageIndex <= stageIndex)
             throw new InvalidStageIndexException(
                     "El índice de la etapa siguiente no debe ser menor o igual al índice de la etapa actual."
@@ -300,7 +292,7 @@ public class ProcessServiceImpl implements ProcessService {
     private void verifyIfStageExists(StageRequestDto stageRequest, Integer processSchemaId) throws StageException {
         String stageName = stageRequest.getName();
         if (stageName == null) throw new InvalidStageNameException("El nombre de la etapa no debe ser nulo.");
-        Byte stageIndex = stageRequest.getStageIndex();
+        Integer stageIndex = stageRequest.getStageIndex();
         if (stageIndex == null) throw new InvalidStageIndexException("El índice de la etapa no debe ser nulo.");
         List<Stage> stages = stageRepository.getAllByProcessSchemaId(processSchemaId);
         for (Stage stage : stages) {
@@ -316,7 +308,7 @@ public class ProcessServiceImpl implements ProcessService {
     }
 
     private void verifyApprovalsRequired(StageRequestDto stageRequest) throws InvalidApprovalsRequiredException {
-        Byte approvalsRequired = stageRequest.getApprovalsRequired();
+        Integer approvalsRequired = stageRequest.getApprovalsRequired();
         if (approvalsRequired < 1)
             throw new InvalidApprovalsRequiredException("La cantidad de aprobaciones requeridas debe ser al menos 1.");
         List<StageAnalystRequestDto> analysts = stageRequest.getAnalysts();
@@ -363,12 +355,12 @@ public class ProcessServiceImpl implements ProcessService {
     }
 
     private Stage updateStageWithIndexes(Stage savedStage, List<Stage> savedStages) throws InvalidStageIndexException {
-        Byte previousStageIndex = savedStage.getPreviousStageIndex();
+        Integer previousStageIndex = savedStage.getPreviousStageIndex();
         if (previousStageIndex != null) {
             Stage previousStage = findStageByIndex(savedStages, previousStageIndex);
             savedStage.setPreviousStageId(previousStage.getId());
         }
-        Byte nextStageIndex = savedStage.getNextStageIndex();
+        Integer nextStageIndex = savedStage.getNextStageIndex();
         if (nextStageIndex != null) {
             Stage nextStage = findStageByIndex(savedStages, nextStageIndex);
             savedStage.setNextStageId(nextStage.getId());
@@ -376,7 +368,7 @@ public class ProcessServiceImpl implements ProcessService {
         return stageRepository.saveAndFlush(savedStage);
     }
 
-    private Stage findStageByIndex(List<Stage> stages, Byte stageIndex) throws InvalidStageIndexException {
+    private Stage findStageByIndex(List<Stage> stages, Integer stageIndex) throws InvalidStageIndexException {
         return stages.stream()
                 .filter(stage -> stage.getStageIndex().equals(stageIndex))
                 .findFirst()
@@ -390,7 +382,7 @@ public class ProcessServiceImpl implements ProcessService {
             InvalidStageIndexException, UseOfAllStagesException {
         if (inputs == null || inputs.isEmpty())
             throw new InvalidInputListException("La lista de campos del formulario no debe ser nula o estar vacía.");
-        List<Byte> stageIndexesUsed = getStageIndexesUsed(savedStages);
+        List<Integer> stageIndexesUsed = getStageIndexesUsed(savedStages);
         for (InputRequestDto inputRequest : inputs) {
             Integer inputTypeId = inputRequest.getInputTypeId();
             InputType inputType = inputTypeRepository.findById(inputTypeId)
@@ -414,12 +406,12 @@ public class ProcessServiceImpl implements ProcessService {
         if (savedStages.size() > 1) verifyIfAllStagesAreBeingUsed(stageIndexesUsed, savedStages.size());
     }
 
-    private List<Byte> getStageIndexesUsed(List<Stage> stages) {
-        List<Byte> stageIndexesUsed = new ArrayList<>();
+    private List<Integer> getStageIndexesUsed(List<Stage> stages) {
+        List<Integer> stageIndexesUsed = new ArrayList<>();
         stages.forEach(stage -> {
-            Byte previousStageIndex = stage.getPreviousStageIndex();
+            Integer previousStageIndex = stage.getPreviousStageIndex();
             if (!stageIndexesUsed.contains(previousStageIndex)) stageIndexesUsed.add(previousStageIndex);
-            Byte nextStageIndex = stage.getNextStageIndex();
+            Integer nextStageIndex = stage.getNextStageIndex();
             if (!stageIndexesUsed.contains(nextStageIndex)) stageIndexesUsed.add(nextStageIndex);
         });
         return stageIndexesUsed;
@@ -502,7 +494,7 @@ public class ProcessServiceImpl implements ProcessService {
     }
 
     private void saveSelectionInputValues(List<SelectionInputValueRequestDto> selectionValues, Input savedInput,
-                                          List<Stage> savedStages, List<Byte> stageIndexesUsed,
+                                          List<Stage> savedStages, List<Integer> stageIndexesUsed,
                                           ProcessSchema processSchema) throws SelectionInputValueException,
             InvalidStageIndexException {
         if (selectionValues == null || selectionValues.size() < 2)
@@ -520,7 +512,7 @@ public class ProcessServiceImpl implements ProcessService {
     }
 
     private void saveSelectionInputValue(SelectionInputValueRequestDto selectionInputValueRequest, Input savedInput,
-                                         List<Stage> savedStages, List<Byte> stageIndexesUsed,
+                                         List<Stage> savedStages, List<Integer> stageIndexesUsed,
                                          ProcessSchema processSchema) throws InvalidSelectionValueException,
             InvalidStageIndexException {
         String value = selectionInputValueRequest.getValue();
@@ -545,7 +537,7 @@ public class ProcessServiceImpl implements ProcessService {
     }
 
     private void saveTriggerSequencesIfNecessary(List<TriggerSequenceRequestDto> triggerSequences,
-                                                 List<Stage> savedStages, List<Byte> stageIndexesUsed,
+                                                 List<Stage> savedStages, List<Integer> stageIndexesUsed,
                                                  Integer selectionInputValueId, ProcessSchema processSchema,
                                                  Input savedInput) throws InvalidStageIndexException {
         if (triggerSequences == null || triggerSequences.isEmpty()) return;
@@ -560,13 +552,13 @@ public class ProcessServiceImpl implements ProcessService {
     }
 
     private void saveTriggerSequence(TriggerSequenceRequestDto triggerSequenceRequest, List<Stage> savedStages,
-                                     List<Byte> stageIndexesUsed, Integer selectionInputValueId)
+                                     List<Integer> stageIndexesUsed, Integer selectionInputValueId)
             throws InvalidStageIndexException {
         TriggerSequence triggerSequence = new TriggerSequence();
-        Byte nextStageIndex = triggerSequenceRequest.getNextStageIndex();
+        Integer nextStageIndex = triggerSequenceRequest.getNextStageIndex();
         Boolean hasNextStage = nextStageIndex != null;
         triggerSequence.setHasNextStage(hasNextStage);
-        Byte currentStageIndex = triggerSequenceRequest.getCurrentStageIndex();
+        Integer currentStageIndex = triggerSequenceRequest.getCurrentStageIndex();
         if (currentStageIndex == null)
             throw new InvalidStageIndexException(
                     "El índice de la etapa actual no debe ser nulo para un desencadenador."
@@ -588,9 +580,9 @@ public class ProcessServiceImpl implements ProcessService {
         triggerSequenceRepository.saveAndFlush(triggerSequence);
     }
 
-    private void verifyIfAllStagesAreBeingUsed(List<Byte> stageIndexesUsed, Integer stagesAmount)
+    private void verifyIfAllStagesAreBeingUsed(List<Integer> stageIndexesUsed, Integer stagesAmount)
             throws UseOfAllStagesException {
-        for (Byte stageIndex = 1; stageIndex <= stagesAmount; stageIndex++)
+        for (Integer stageIndex = 1; stageIndex <= stagesAmount; stageIndex++)
             if (!stageIndexesUsed.contains(stageIndex)) throw new UseOfAllStagesException();
     }
 

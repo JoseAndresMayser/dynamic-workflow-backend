@@ -82,7 +82,7 @@ public class NotificationServiceImpl implements NotificationService {
             String subject = "Nueva solicitud registrada: " + requestCode;
             String message = "Estimad@s Analistas," + "\n" +
                     "El usuario: " + requestingFullName + " ha registrado una nueva solicitud para el proceso: " +
-                    processName + ", se adjunta formulaio de solicitud, por favor revisar." + "\n" +
+                    processName + ", se adjunta formulario de solicitud, por favor revisar." + "\n" +
                     "Código de la solicitud: " + requestCode + "\n" + EMAIL_MESSAGE_FOOTER;
 
             File requestFormFile = new File(requestFormFullPath);
@@ -113,6 +113,25 @@ public class NotificationServiceImpl implements NotificationService {
             attachments.add(attachment);
             mailingService.sendEmailWithAttachments(addressees, subject, message, attachments);
         } catch (EmailException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void sendRequestCompletionNotification(String requestCode, String processName, String requestStatus,
+                                                  String requestingEmail) {
+        try {
+            String subject = "Solicitud finalizada: " + requestCode;
+            String message = "Estimad@ Usuari@," + "\n" +
+                    "Informamos que su solicitud para el proceso: " + processName + ", ha hinalizado.\n" +
+                    "Estado de la solicitud: " + requestStatus + "\n" +
+                    "Código de la solicitud: " + requestCode + "\n" +
+                    EMAIL_MESSAGE_FOOTER;
+
+            List<String> addressees = new ArrayList<>();
+            addressees.add(requestingEmail);
+            mailingService.sendEmail(addressees, subject, message);
+        } catch (EmailException e) {
             e.printStackTrace();
         }
     }

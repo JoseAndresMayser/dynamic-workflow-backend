@@ -3,7 +3,7 @@ package bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.departmentmembe
 public class DepartmentMemberNotFoundException extends DepartmentMemberException {
 
     public DepartmentMemberNotFoundException() {
-        this("Miembro del Departamento no encontrado.");
+        this("Miembro de Departamento no encontrado.");
     }
 
     public DepartmentMemberNotFoundException(String message) {
@@ -11,7 +11,7 @@ public class DepartmentMemberNotFoundException extends DepartmentMemberException
     }
 
     public DepartmentMemberNotFoundException(Integer departmentMemberId) {
-        super(String.format("No se pudo encontrar el miembro de departamento con Id: %d.", departmentMemberId));
+        super(String.format("No se pudo encontrar el Miembro de Departamento con Id: %d.", departmentMemberId));
     }
 
 }

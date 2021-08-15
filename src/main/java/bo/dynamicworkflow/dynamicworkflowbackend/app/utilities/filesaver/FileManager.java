@@ -1,6 +1,7 @@
 package bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.filesaver;
 
 import bo.dynamicworkflow.dynamicworkflowbackend.app.configs.FileStorageConfig;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.DeleteFileException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.DirectoryCreationException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.SaveFileException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.Base64Utility;
@@ -12,6 +13,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.List;
 
 public class FileManager {
 
@@ -49,6 +51,11 @@ public class FileManager {
             throw new SaveFileException("Ocurrió un error al intentar guardar el archivo", e);
         }
         return relativePath.concat(SEPARATOR).concat(fileName);
+    }
+
+    public void deleteFile(String fileRelativePath) throws DeleteFileException {
+        File file = new File(getAbsolutePath(fileRelativePath));
+        if (file.exists() && file.isFile() && !file.delete()) throw new DeleteFileException();
     }
 
     public String getAbsolutePath(String relativePath) {
