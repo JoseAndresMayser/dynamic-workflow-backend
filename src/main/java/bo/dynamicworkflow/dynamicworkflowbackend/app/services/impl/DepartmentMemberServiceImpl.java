@@ -7,6 +7,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.ForbiddenExcepti
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.SaveFileException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.department.DepartmentNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.departmentmember.DepartmentMemberNotFoundException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.digitalcertificate.DigitalCertificateNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.digitalcertificate.InvalidCertificateFileException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.Department;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.DepartmentMember;
@@ -65,10 +66,7 @@ public class DepartmentMemberServiceImpl implements DepartmentMemberService {
                                                                   Integer departmentMemberId)
             throws DepartmentMemberNotFoundException, ForbiddenException, InvalidCertificateFileException,
             DirectoryCreationException, SaveFileException, DeleteFileException {
-        DepartmentMember departmentMember = departmentMemberRepository.findById(departmentMemberId)
-                .orElseThrow(() -> new DepartmentMemberNotFoundException(departmentMemberId));
-        if (!departmentMember.getUserId().equals(SessionHolder.getCurrentUserId()))
-            verifyPermissionForCurrentUser(departmentMember.getId());
+        DepartmentMember departmentMember = getDepartmentMemberOrFail(departmentMemberId);
         Optional<DigitalCertificate> optionalDigitalCertificate =
                 digitalCertificateRepository.findByDepartmentMemberId(departmentMember.getId());
         FileRequestDto certificateFile = request.getCertificate();
@@ -100,17 +98,37 @@ public class DepartmentMemberServiceImpl implements DepartmentMemberService {
         return response;
     }
 
-    private void verifyPermissionForCurrentUser(Integer departmentMemberId) throws DepartmentMemberNotFoundException,
+    @Override
+    public DigitalCertificateResponseDto getDigitalCertificateByDepartmentMemberId(Integer departmentMemberId)
+            throws DepartmentMemberNotFoundException, ForbiddenException, DigitalCertificateNotFoundException {
+        DepartmentMember departmentMember = getDepartmentMemberOrFail(departmentMemberId);
+        DigitalCertificate digitalCertificate =
+                digitalCertificateRepository.findByDepartmentMemberId(departmentMember.getId())
+                        .orElseThrow(() -> new DigitalCertificateNotFoundException(
+                                "El Miembro de Departamento no tiene su certificado digital configurado."
+                        ));
+        return digitalCertificateMapper.toDto(digitalCertificate);
+    }
+
+    private DepartmentMember getDepartmentMemberOrFail(Integer departmentMemberId)
+            throws DepartmentMemberNotFoundException, ForbiddenException {
+        DepartmentMember departmentMember = departmentMemberRepository.findById(departmentMemberId)
+                .orElseThrow(() -> new DepartmentMemberNotFoundException(departmentMemberId));
+        if (!departmentMember.getUserId().equals(SessionHolder.getCurrentUserId()))
+            verifyPermissionForCurrentUser(departmentMember.getDepartmentId());
+        return departmentMember;
+    }
+
+    private void verifyPermissionForCurrentUser(Integer departmentId) throws DepartmentMemberNotFoundException,
             ForbiddenException {
         DepartmentMember currentDepartmentMember =
                 departmentMemberRepository.findLastActiveAssignmentByUserId(SessionHolder.getCurrentUserId())
                         .orElseThrow(() -> new DepartmentMemberNotFoundException(
                                 "El usuario actual no es Miembro activo de ningún Departamento."
                         ));
-        if (!DepartmentHandler.hasPermitsInDepartment(currentDepartmentMember.getDepartment(), departmentMemberId))
+        if (!DepartmentHandler.hasPermitsInDepartment(currentDepartmentMember.getDepartment(), departmentId))
             throw new ForbiddenException(
-                    "El usuario actual no tiene permisos para subir el certificado digital del " +
-                            "Miembro de Departamento indicado."
+                    "El usuario actual no tiene permisos sobre el Miembro de Departamento indicado."
             );
     }
 
