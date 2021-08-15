@@ -15,6 +15,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.DepartmentMemb
 import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.DepartmentRepository;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.UserRepository;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.DepartmentService;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.DepartmentMemberDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.CompleteDepartmentRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.DepartmentRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.UpdateDepartmentMembersRequestDto;
@@ -148,12 +149,22 @@ public class DepartmentServiceImpl implements DepartmentService {
                         .orElseThrow(() -> new DepartmentMemberNotFoundException(
                                 "Miembro Jefe del Departamento no encontrado."
                         ));
+        DepartmentMemberDto departmentBossMemberDto = departmentMemberMapper.toDto(departmentBossMember);
+        departmentBossMemberDto.setUser(userMapper.toDto(departmentBossMember.getUser()));
+        departmentBossMemberDto.setDepartment(departmentMapper.toDto(departmentBossMember.getDepartment()));
         List<DepartmentMember> analystMembers =
                 departmentMemberRepository.getAllActiveAnalystMembersByDepartmentId(departmentId);
+        List<DepartmentMemberDto> analystMembersDto = new ArrayList<>();
+        analystMembers.forEach(analystMember -> {
+            DepartmentMemberDto analystMemberDto = departmentMemberMapper.toDto(analystMember);
+            analystMemberDto.setUser(userMapper.toDto(analystMember.getUser()));
+            analystMemberDto.setDepartment(departmentMapper.toDto(analystMember.getDepartment()));
+            analystMembersDto.add(analystMemberDto);
+        });
         return new CompleteDepartmentResponseDto(
                 departmentMapper.toDto(department),
-                departmentMemberMapper.toDto(departmentBossMember),
-                departmentMemberMapper.toDto(analystMembers)
+                departmentBossMemberDto,
+                analystMembersDto
         );
     }
 
