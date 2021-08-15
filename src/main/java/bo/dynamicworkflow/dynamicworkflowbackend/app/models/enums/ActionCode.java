@@ -31,7 +31,11 @@ public enum ActionCode {
     PROCESS_CREATE,
     PROCESS_GET_ALL,
 
-    REQUEST_REGISTER;
+    REQUEST_REGISTER,
+    REQUEST_GET_ALL_CURRENT_USER,
+    REQUEST_EXECUTE_ACTION,
+
+    DEPARTMENT_MEMBER_UPLOAD_CERTIFICATE;
 
     public static List<ActionCode> actionsWithoutAuth() {
         return new ArrayList<ActionCode>() {

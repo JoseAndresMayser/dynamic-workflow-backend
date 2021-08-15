@@ -18,4 +18,7 @@ public interface NotificationService {
     void sendRegisteredNewRequestNotification(String requestingEmail, String processName, String requestCode,
                                               String requestFormFullPath);
 
+    void sendRequestCompletionNotification(String requestCode, String processName, String requestStatus,
+                                           String requestingEmail);
+
 }

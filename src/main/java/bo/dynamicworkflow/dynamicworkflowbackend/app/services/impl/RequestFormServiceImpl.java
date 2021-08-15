@@ -1,9 +1,11 @@
 package bo.dynamicworkflow.dynamicworkflowbackend.app.services.impl;
 
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.request.RequestFormGenerationException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.request.RequestFormSigningException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.Request;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.User;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.RequestFormGeneratorService;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.RequestFormService;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.IoUtility;
 import fr.opensagres.xdocreport.converter.ConverterTypeTo;
 import fr.opensagres.xdocreport.converter.ConverterTypeVia;
 import fr.opensagres.xdocreport.converter.Options;
@@ -14,13 +16,16 @@ import fr.opensagres.xdocreport.template.IContext;
 import fr.opensagres.xdocreport.template.TemplateEngineKind;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.security.*;
+import java.security.cert.Certificate;
+import java.io.*;
+
+import com.lowagie.text.pdf.*;
+
 import java.text.SimpleDateFormat;
 
 @Service
-public class RequestFormGeneratorServiceImpl implements RequestFormGeneratorService {
+public class RequestFormServiceImpl implements RequestFormService {
 
     @Override
     public byte[] generateRequestForm(String processName, Request request, User user)
@@ -28,7 +33,7 @@ public class RequestFormGeneratorServiceImpl implements RequestFormGeneratorServ
         String template = "requests/request-form-template.docx";
         try {
             InputStream templateInputStream =
-                    RequestFormGeneratorServiceImpl.class.getClassLoader().getResourceAsStream(template);
+                    RequestFormServiceImpl.class.getClassLoader().getResourceAsStream(template);
             if (templateInputStream == null)
                 throw new RequestFormGenerationException(
                         "No se pudo encontrar la plantilla para generar el formulario de solicitud."
@@ -50,6 +55,34 @@ public class RequestFormGeneratorServiceImpl implements RequestFormGeneratorServ
             return data;
         } catch (IOException | XDocReportException e) {
             throw new RequestFormGenerationException("Ocurrió un error al generar el formulario de solicitud.", e);
+        }
+    }
+
+    @Override
+    public void signRequestForm(String certificatePath, String certificatePassword, String requestFormPath)
+            throws RequestFormSigningException {
+        try {
+            KeyStore keyStore = KeyStore.getInstance("pkcs12");
+            keyStore.load(new FileInputStream(certificatePath), certificatePassword.toCharArray());
+            String alias = keyStore.aliases().nextElement();
+            PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, certificatePassword.toCharArray());
+            Certificate[] chain = keyStore.getCertificateChain(alias);
+            // Recibimos como parámetro de entrada el nombre del archivo PDF a firmar
+            PdfReader reader = new PdfReader(IoUtility.readFile(requestFormPath));
+            FileOutputStream fileOutputStream = new FileOutputStream(requestFormPath);
+
+            // Añadimos firma al documento PDF
+            PdfStamper pdfStamper = PdfStamper.createSignature(reader, fileOutputStream, '?');
+            PdfSignatureAppearance pdfSignatureAppearance = pdfStamper.getSignatureAppearance();
+            pdfSignatureAppearance.setCrypto(privateKey, chain, null,
+                    PdfSignatureAppearance.WINCER_SIGNED);
+            pdfSignatureAppearance.setReason("Firma Aprobación de Solicitud");
+            pdfSignatureAppearance.setLocation("Santa Cruz de la Sierra");
+            // Añade la firma visible. Podemos comentarla para que no sea visible.
+            //pdfSignatureAppearance.setVisibleSignature(new Rectangle(100, 100, 200, 200), 1, null);
+            pdfStamper.close();
+        } catch (Exception e) {
+            throw new RequestFormSigningException("Ocurrió un error al intentar firmar el formulario de solicitud", e);
         }
     }
 

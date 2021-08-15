@@ -20,19 +20,19 @@ public class Stage {
     private String description;
 
     @Column(name = "approvals_required", nullable = false)
-    private Byte approvalsRequired;
+    private Integer approvalsRequired;
 
     @Column(name = "has_conditional", nullable = false)
     private Boolean hasConditional;
 
     @Column(name = "stage_index", nullable = false)
-    private Byte stageIndex;
+    private Integer stageIndex;
 
     @Column(name = "previous_stage_index")
-    private Byte previousStageIndex;
+    private Integer previousStageIndex;
 
     @Column(name = "next_stage_index")
-    private Byte nextStageIndex;
+    private Integer nextStageIndex;
 
     @Column(name = "previous_stage_id")
     private Integer previousStageId;

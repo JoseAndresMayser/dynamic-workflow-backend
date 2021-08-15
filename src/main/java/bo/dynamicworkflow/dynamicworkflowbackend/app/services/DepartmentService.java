@@ -11,7 +11,6 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.Compl
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.DepartmentRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.UpdateDepartmentMembersRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.CompleteDepartmentResponseDto;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.DepartmentMemberDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.DepartmentResponseDto;
 
 import java.util.List;
@@ -29,15 +28,12 @@ public interface DepartmentService {
             UserNotFoundException, DepartmentMemberException;
 
     CompleteDepartmentResponseDto getCompleteDepartmentById(Integer departmentId) throws DepartmentNotFoundException,
-            DepartmentMemberNotFoundException, UserNotFoundException;
+            DepartmentMemberNotFoundException;
 
     List<DepartmentResponseDto> getAllDepartmentsForCurrentUser() throws DepartmentMemberNotFoundException,
             DepartmentNotFoundException;
 
     List<DepartmentResponseDto> getDepartmentWithDescendantsById(Integer departmentId)
-            throws DepartmentNotFoundException;
-
-    List<DepartmentMemberDto> getAllDepartmentMembersByDepartmentId(Integer departmentId)
             throws DepartmentNotFoundException;
 
     DepartmentResponseDto getRootDepartment() throws DepartmentNotFoundException;

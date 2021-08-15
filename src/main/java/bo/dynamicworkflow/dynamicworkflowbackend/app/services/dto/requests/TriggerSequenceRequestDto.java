@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class TriggerSequenceRequestDto {
 
-    private Byte currentStageIndex;
-    private Byte nextStageIndex;
+    private Integer currentStageIndex;
+    private Integer nextStageIndex;
 
 }

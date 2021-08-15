@@ -9,10 +9,10 @@ public class StageRequestDto {
 
     private String name;
     private String description;
-    private Byte approvalsRequired;
-    private Byte stageIndex;
-    private Byte previousStageIndex;
-    private Byte nextStageIndex;
+    private Integer approvalsRequired;
+    private Integer stageIndex;
+    private Integer previousStageIndex;
+    private Integer nextStageIndex;
     private List<StageAnalystRequestDto> analysts;
 
 }

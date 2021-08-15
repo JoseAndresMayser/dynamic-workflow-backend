@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class FileInputValueRequestDto {
+public class FileRequestDto {
 
     private String fileContent;
     private String extension;

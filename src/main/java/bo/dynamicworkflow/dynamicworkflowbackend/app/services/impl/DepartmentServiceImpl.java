@@ -19,7 +19,6 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.Compl
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.DepartmentRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.UpdateDepartmentMembersRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.CompleteDepartmentResponseDto;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.DepartmentMemberDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.DepartmentResponseDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.DepartmentMapper;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.DepartmentMemberMapper;
@@ -65,8 +64,8 @@ public class DepartmentServiceImpl implements DepartmentService {
                 null
         );
         DepartmentStatus status = getDepartmentStatus(departmentRequest.getStatus());
-        Integer departmentBossId = request.getDepartmentBossId();
-        User departmentBoss = getDepartmentBossOrFail(departmentBossId);
+        User departmentBoss = getDepartmentBossOrFail(request.getDepartmentBossId());
+        Integer departmentBossId = departmentBoss.getId();
         Department department = departmentMapper.toEntity(departmentRequest);
         Timestamp currentTimestamp = TimeUtility.getCurrentTimestamp();
         department.setCreationTimestamp(currentTimestamp);
@@ -74,15 +73,14 @@ public class DepartmentServiceImpl implements DepartmentService {
         department.setStatus(status);
         Department registeredDepartment = departmentRepository.saveAndFlush(department);
         Integer departmentId = registeredDepartment.getId();
-        registerNewDepartmentBoss(departmentBossId, departmentId);
+        DepartmentMember departmentBossMember = registerNewDepartmentBoss(departmentBossId, departmentId);
         List<Integer> analystMembersId = request.getAnalystMembersId();
         verifyAnalystMembersId(analystMembersId, departmentBossId);
-        registerAnalystMembers(analystMembersId, departmentId);
-        List<User> analystMembers = getUsersByIds(analystMembersId);
+        List<DepartmentMember> analystMembers = registerAnalystMembers(analystMembersId, departmentId);
         return new CompleteDepartmentResponseDto(
                 departmentMapper.toDto(registeredDepartment),
-                userMapper.toDto(departmentBoss),
-                userMapper.toDto(analystMembers)
+                departmentMemberMapper.toDto(departmentBossMember),
+                departmentMemberMapper.toDto(analystMembers)
         );
     }
 
@@ -116,10 +114,11 @@ public class DepartmentServiceImpl implements DepartmentService {
             UserNotFoundException, DepartmentMemberException {
         Department department = getOptionalDepartmentById(departmentId)
                 .orElseThrow(() -> new DepartmentNotFoundException(departmentId));
-        Integer newDepartmentBossId = request.getDepartmentBossId();
-        User newDepartmentBoss = getNewDepartmentBossOrFail(newDepartmentBossId, departmentId);
+        User newDepartmentBoss = getNewDepartmentBossOrFail(request.getDepartmentBossId(), departmentId);
         User oldDepartmentBoss = getOldDepartmentBossByDepartmentId(departmentId);
-        updateDepartmentBossIfNecessary(newDepartmentBossId, oldDepartmentBoss.getId(), departmentId);
+        Integer newDepartmentBossId = newDepartmentBoss.getId();
+        DepartmentMember departmentBossMember =
+                updateDepartmentBossIfNecessary(newDepartmentBossId, oldDepartmentBoss.getId(), departmentId);
         List<Integer> newAnalystMembersId = request.getAnalystMembersId();
         verifyAnalystMembersId(newAnalystMembersId, newDepartmentBossId);
         List<DepartmentMember> currentAnalystMembers =
@@ -129,20 +128,19 @@ public class DepartmentServiceImpl implements DepartmentService {
                 .filter(currentAnalystMember -> !newAnalystMembersId.remove(currentAnalystMember.getUserId()))
                 .collect(Collectors.toList());
         deactivateAnalystMembers(analystMembersToDeactivate);
-        registerAnalystMembers(newAnalystMembersId, departmentId);
+        List<DepartmentMember> newAnalystMembers = registerAnalystMembers(newAnalystMembersId, departmentId);
         department.setModificationTimestamp(TimeUtility.getCurrentTimestamp());
         Department updatedDepartment = departmentRepository.saveAndFlush(department);
-        List<User> newAnalystMembers = getUsersByIds(newAnalystMembersId);
         return new CompleteDepartmentResponseDto(
                 departmentMapper.toDto(updatedDepartment),
-                userMapper.toDto(newDepartmentBoss),
-                userMapper.toDto(newAnalystMembers)
+                departmentMemberMapper.toDto(departmentBossMember),
+                departmentMemberMapper.toDto(newAnalystMembers)
         );
     }
 
     @Override
     public CompleteDepartmentResponseDto getCompleteDepartmentById(Integer departmentId)
-            throws DepartmentNotFoundException, DepartmentMemberNotFoundException, UserNotFoundException {
+            throws DepartmentNotFoundException, DepartmentMemberNotFoundException {
         Department department = departmentRepository.findById(departmentId)
                 .orElseThrow(() -> new DepartmentNotFoundException(departmentId));
         DepartmentMember departmentBossMember =
@@ -150,15 +148,12 @@ public class DepartmentServiceImpl implements DepartmentService {
                         .orElseThrow(() -> new DepartmentMemberNotFoundException(
                                 "Miembro Jefe del Departamento no encontrado."
                         ));
-        User departmentBoss = departmentBossMember.getUser();
-        if (departmentBoss == null) throw new UserNotFoundException("Jefe del Departamento no encontrado.");
         List<DepartmentMember> analystMembers =
                 departmentMemberRepository.getAllActiveAnalystMembersByDepartmentId(departmentId);
-        List<User> analysts = analystMembers.stream().map(DepartmentMember::getUser).collect(Collectors.toList());
         return new CompleteDepartmentResponseDto(
                 departmentMapper.toDto(department),
-                userMapper.toDto(departmentBoss),
-                userMapper.toDto(analysts)
+                departmentMemberMapper.toDto(departmentBossMember),
+                departmentMemberMapper.toDto(analystMembers)
         );
     }
 
@@ -186,23 +181,6 @@ public class DepartmentServiceImpl implements DepartmentService {
         List<Department> departments = new ArrayList<>();
         fillListWithDepartments(departments, department);
         return departmentMapper.toDto(departments);
-    }
-
-    @Override
-    public List<DepartmentMemberDto> getAllDepartmentMembersByDepartmentId(Integer departmentId)
-            throws DepartmentNotFoundException {
-        Department department = getOptionalDepartmentById(departmentId)
-                .orElseThrow(() -> new DepartmentNotFoundException(departmentId));
-        List<DepartmentMember> departmentMembers =
-                departmentMemberRepository.getAllActiveDepartmentMembersByDepartmentId(department.getId());
-        List<DepartmentMemberDto> response = new ArrayList<>();
-        departmentMembers.forEach(departmentMember -> {
-            DepartmentMemberDto departmentMemberDto = departmentMemberMapper.toDto(departmentMember);
-            departmentMemberDto.setUser(userMapper.toDto(departmentMember.getUser()));
-            departmentMemberDto.setDepartment(departmentMapper.toDto(departmentMember.getDepartment()));
-            response.add(departmentMemberDto);
-        });
-        return response;
     }
 
     @Override
@@ -292,7 +270,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         return userRepository.findById(userId);
     }
 
-    private void registerNewDepartmentBoss(Integer newDepartmentBossId, Integer departmentId) {
+    private DepartmentMember registerNewDepartmentBoss(Integer newDepartmentBossId, Integer departmentId) {
         Optional<DepartmentMember> optionalDepartmentMember =
                 getLastActiveOptionalDepartmentMemberByUserId(newDepartmentBossId);
         if (optionalDepartmentMember.isPresent()) {
@@ -306,7 +284,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         newDepartmentMember.setIsActive(true);
         newDepartmentMember.setUserId(newDepartmentBossId);
         newDepartmentMember.setDepartmentId(departmentId);
-        departmentMemberRepository.saveAndFlush(newDepartmentMember);
+        return departmentMemberRepository.saveAndFlush(newDepartmentMember);
     }
 
     private void verifyAnalystMembersId(List<Integer> analystMembersId, Integer departmentBossId)
@@ -323,7 +301,7 @@ public class DepartmentServiceImpl implements DepartmentService {
             );
     }
 
-    private void registerAnalystMembers(List<Integer> analystMembersId, Integer departmentId)
+    private List<DepartmentMember> registerAnalystMembers(List<Integer> analystMembersId, Integer departmentId)
             throws UserNotFoundException, UserAlreadyDepartmentMemberException {
         List<DepartmentMember> departmentMembers = new ArrayList<>();
         for (Integer analystMemberId : analystMembersId) {
@@ -341,7 +319,7 @@ public class DepartmentServiceImpl implements DepartmentService {
             newDepartmentMember.setDepartmentId(departmentId);
             departmentMembers.add(newDepartmentMember);
         }
-        departmentMemberRepository.saveAll(departmentMembers);
+        return departmentMemberRepository.saveAll(departmentMembers);
     }
 
     private List<User> getUsersByIds(List<Integer> usersId) {
@@ -372,17 +350,17 @@ public class DepartmentServiceImpl implements DepartmentService {
         return departmentBoss;
     }
 
-    private void updateDepartmentBossIfNecessary(Integer newDepartmentBossId, Integer oldDepartmentBossId,
-                                                 Integer departmentId) throws DepartmentMemberNotFoundException {
-        if (newDepartmentBossId.equals(oldDepartmentBossId)) return;
+    private DepartmentMember updateDepartmentBossIfNecessary(Integer newDepartmentBossId, Integer oldDepartmentBossId,
+                                                             Integer departmentId) throws DepartmentMemberNotFoundException {
         DepartmentMember oldDepartmentBossMember = getLastActiveOptionalDepartmentMemberByUserId(oldDepartmentBossId)
                 .orElseThrow(() -> new DepartmentMemberNotFoundException(
                         "Antiguo Miembro Jefe de Departamento no encontrado."
                 ));
+        if (newDepartmentBossId.equals(oldDepartmentBossId)) return oldDepartmentBossMember;
         oldDepartmentBossMember.setIsActive(false);
         departmentMemberRepository.saveAndFlush(oldDepartmentBossMember);
 
-        registerNewDepartmentBoss(newDepartmentBossId, departmentId);
+        return registerNewDepartmentBoss(newDepartmentBossId, departmentId);
     }
 
     private void deactivateAnalystMembers(List<DepartmentMember> analystMembersToDeactivate) {

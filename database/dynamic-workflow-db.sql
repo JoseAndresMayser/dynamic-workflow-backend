@@ -516,3 +516,58 @@ CREATE TABLE request_stages
     FOREIGN KEY (request_id) REFERENCES requests (id),
     FOREIGN KEY (stage_id) REFERENCES stages (id)
 );
+
+INSERT INTO actions(code, description)
+VALUES ('REQUEST_GET_ALL_CURRENT_USER', 'Ver mis solicitudes');
+
+INSERT INTO role_actions(role_id, action_id)
+VALUES (1, 21);
+
+INSERT INTO user_actions(user_id, action_id)
+VALUES (1, 21);
+
+DROP TABLE IF EXISTS request_actions CASCADE;
+
+CREATE TABLE request_actions
+(
+    id                  SERIAL                   NOT NULL,
+    execution_timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    executed_action     VARCHAR(50)              NOT NULL,
+    commentary          VARCHAR(256),
+    request_id          INT                      NOT NULL,
+    stage_analyst_id    INT                      NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (request_id) REFERENCES requests (id),
+    FOREIGN KEY (stage_analyst_id) REFERENCES stage_analysts (id)
+);
+
+INSERT INTO actions(code, description)
+VALUES ('REQUEST_EXECUTE_ACTION', 'Ejecutar acción sobre solicitud');
+
+INSERT INTO role_actions(role_id, action_id)
+VALUES (1, 22);
+
+INSERT INTO user_actions(user_id, action_id)
+VALUES (1, 22);
+
+DROP TABLE IF EXISTS digital_certificates CASCADE;
+
+CREATE TABLE digital_certificates
+(
+    id                     SERIAL                   NOT NULL,
+    path                   VARCHAR(512)             NOT NULL,
+    upload_timestamp       TIMESTAMP WITH TIME ZONE NOT NULL,
+    modification_timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    department_member_id   INT                      NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (department_member_id) REFERENCES department_members (id)
+);
+
+INSERT INTO actions(code, description)
+VALUES ('DEPARTMENT_MEMBER_UPLOAD_CERTIFICATE', 'Subir certificado digital');
+
+INSERT INTO role_actions(role_id, action_id)
+VALUES (1, 23);
+
+INSERT INTO user_actions(user_id, action_id)
+VALUES (1, 23);

@@ -12,11 +12,11 @@ public class StageResponseDto {
     private Integer id;
     private String name;
     private String description;
-    private Byte approvalsRequired;
+    private Integer approvalsRequired;
     private Boolean hasConditional;
-    private Byte stageIndex;
-    private Byte previousStageIndex;
-    private Byte nextStageIndex;
+    private Integer stageIndex;
+    private Integer previousStageIndex;
+    private Integer nextStageIndex;
     private Integer previousStageId;
     private Integer nextStageId;
     private Integer processSchemaId;
