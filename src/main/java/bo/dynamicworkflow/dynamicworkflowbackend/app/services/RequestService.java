@@ -33,4 +33,6 @@ public interface RequestService {
 
     List<RequestResponseDto> getPendingRequestsForCurrentAnalyst() throws DepartmentMemberNotFoundException;
 
+    List<RequestResponseDto> getFinishedRequestsForCurrentAnalyst() throws DepartmentMemberNotFoundException;
+
 }

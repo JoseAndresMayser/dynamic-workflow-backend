@@ -173,13 +173,7 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public List<RequestResponseDto> getPendingRequestsForCurrentAnalyst() throws DepartmentMemberNotFoundException {
-        DepartmentMember currentDepartmentMember =
-                departmentMemberRepository.findLastActiveAssignmentByUserId(SessionHolder.getCurrentUserId())
-                        .orElseThrow(() -> new DepartmentMemberNotFoundException(
-                                "El usuario actual no es Miembro activo de ningún Departamento."
-                        ));
-        List<StageAnalyst> stageAnalysts =
-                stageAnalystRepository.getAllByDepartmentMemberId(currentDepartmentMember.getId());
+        List<StageAnalyst> stageAnalysts = getStageAnalystsForCurrentUser();
         List<Request> requests = new ArrayList<>();
         stageAnalysts.forEach(stageAnalyst -> {
             Stage stage = stageAnalyst.getStage();
@@ -193,6 +187,21 @@ public class RequestServiceImpl implements RequestService {
                         if (!optionalRequestAction.isPresent()) requests.add(request);
                     });
         });
+        return requestMapper.toDto(requests);
+    }
+
+    @Override
+    public List<RequestResponseDto> getFinishedRequestsForCurrentAnalyst() throws DepartmentMemberNotFoundException {
+        List<StageAnalyst> stageAnalysts = getStageAnalystsForCurrentUser();
+        List<Request> requests = new ArrayList<>();
+        stageAnalysts.stream()
+                .map(StageAnalyst::getStage)
+                .map(stage -> requestStageRepository.getAllByStageId(stage.getId()))
+                .forEach(requestStages -> requestStages.stream()
+                        .filter(requestStage -> requestStage.getStatus().equals(RequestStageStatus.FINISHED))
+                        .map(RequestStage::getRequest)
+                        .filter(request -> !request.getStatus().equals(RequestStatus.IN_PROCESS))
+                        .forEach(requests::add));
         return requestMapper.toDto(requests);
     }
 
@@ -602,6 +611,15 @@ public class RequestServiceImpl implements RequestService {
         if (stageAnalyst.getRequiresApproval())
             throw new RequiresApprovalException("Se requiere APROBACIÓN del analista actual.");
         return saveNewRequestAction(requestDto, request.getId(), stageAnalyst.getId());
+    }
+
+    private List<StageAnalyst> getStageAnalystsForCurrentUser() throws DepartmentMemberNotFoundException {
+        DepartmentMember currentDepartmentMember =
+                departmentMemberRepository.findLastActiveAssignmentByUserId(SessionHolder.getCurrentUserId())
+                        .orElseThrow(() -> new DepartmentMemberNotFoundException(
+                                "El usuario actual no es Miembro activo de ningún Departamento."
+                        ));
+        return stageAnalystRepository.getAllByDepartmentMemberId(currentDepartmentMember.getId());
     }
 
 }

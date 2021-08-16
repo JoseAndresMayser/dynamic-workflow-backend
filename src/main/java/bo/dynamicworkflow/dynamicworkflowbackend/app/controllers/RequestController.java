@@ -77,4 +77,15 @@ public class RequestController {
         );
     }
 
+    @GetMapping("/finished/current-analyst")
+    @ResourceAction(enablerActions = {ActionCode.REQUEST_EXECUTE_ACTION})
+    public GeneralResponse getFinishedRequestsForCurrentAnalyst() throws DepartmentMemberNotFoundException {
+        List<RequestResponseDto> response = requestService.getFinishedRequestsForCurrentAnalyst();
+        return new GeneralResponse(
+                true,
+                response,
+                "Solicitudes finalizadas del analista actual obtenidas exitosamente."
+        );
+    }
+
 }
