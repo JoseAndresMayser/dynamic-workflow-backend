@@ -2,6 +2,7 @@ package bo.dynamicworkflow.dynamicworkflowbackend.app.services.impl;
 
 import bo.dynamicworkflow.dynamicworkflowbackend.app.access.SessionHolder;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.DirectoryCreationException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.FileReadException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.SaveFileException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.departmentmember.DepartmentMemberNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.digitalcertificate.DigitalCertificateNotFoundException;
@@ -32,11 +33,16 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.*;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.RequestFormService;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.RequestService;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.*;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.FileResponseDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.RequestActionResponseDto;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.RequestDetailResponseDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.RequestResponseDto;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.ProcessMapper;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.RequestActionMapper;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.RequestMapper;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.mappers.UserMapper;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.Base64Utility;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.IoUtility;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.TimeUtility;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.filesaver.RequestFileManager;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.filesaver.SaveFileRequest;
@@ -46,6 +52,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -77,6 +85,8 @@ public class RequestServiceImpl implements RequestService {
     private final Gson gson = new Gson();
     private final RequestMapper requestMapper = new RequestMapper();
     private final RequestActionMapper requestActionMapper = new RequestActionMapper();
+    private final ProcessMapper processMapper = new ProcessMapper();
+    private final UserMapper userMapper = new UserMapper();
 
     @Autowired
     public RequestServiceImpl(ProcessRepository processRepository, ProcessSchemaRepository processSchemaRepository,
@@ -144,8 +154,7 @@ public class RequestServiceImpl implements RequestService {
             throws RequestException, InvalidDigitalCertificatePasswordException, StageAnalystException,
             InactiveProcessException, DepartmentMemberNotFoundException,
             RequestStageException, DigitalCertificateNotFoundException {
-        Request requestModel = requestRepository.findById(requestId)
-                .orElseThrow(() -> new RequestNotFoundException(requestId));
+        Request requestModel = getRequestByRequestId(requestId);
         if (!requestModel.getStatus().equals(RequestStatus.IN_PROCESS))
             throw new InvalidRequestStatusException(
                     "No se puede ejecutar una acción sobre la solicitud debido a que no se encuentra EN PROCESO."
@@ -203,6 +212,30 @@ public class RequestServiceImpl implements RequestService {
                         .filter(request -> !request.getStatus().equals(RequestStatus.IN_PROCESS))
                         .forEach(requests::add));
         return requestMapper.toDto(requests);
+    }
+
+    @Override
+    public FileResponseDto downloadRequestFormByRequestId(Integer requestId) throws RequestNotFoundException,
+            FileReadException {
+        Request request = getRequestByRequestId(requestId);
+        String formPath = requestFileManager.getAbsolutePath(request.getFormPath());
+        File requestFormFile = new File(formPath);
+        byte[] requestFormBytes = readRequestForm(formPath);
+        return new FileResponseDto(
+                IoUtility.getFileNameWithoutExtension(requestFormFile),
+                Base64Utility.encodeAsString(requestFormBytes),
+                IoUtility.getFileExtension(requestFormFile)
+        );
+    }
+
+    @Override
+    public RequestDetailResponseDto getRequestDetailByRequestId(Integer requestId) throws RequestNotFoundException {
+        Request request = getRequestByRequestId(requestId);
+        return new RequestDetailResponseDto(
+                requestMapper.toDto(request),
+                processMapper.toDto(request.getProcess()),
+                userMapper.toDto(request.getUser())
+        );
     }
 
     private ProcessSchema getProcessSchemaOrFail(Integer processId) throws ProcessException {
@@ -433,6 +466,10 @@ public class RequestServiceImpl implements RequestService {
         );
     }
 
+    private Request getRequestByRequestId(Integer requestId) throws RequestNotFoundException {
+        return requestRepository.findById(requestId).orElseThrow(() -> new RequestNotFoundException(requestId));
+    }
+
     private StageAnalyst getStageAnalystForCurrentUserOrFail(Request request) throws InactiveProcessException,
             InvalidStageAnalystException, DepartmentMemberNotFoundException, ActionOnRequestAlreadyExecutedException,
             RequestStageException {
@@ -620,6 +657,15 @@ public class RequestServiceImpl implements RequestService {
                                 "El usuario actual no es Miembro activo de ningún Departamento."
                         ));
         return stageAnalystRepository.getAllByDepartmentMemberId(currentDepartmentMember.getId());
+    }
+
+    private byte[] readRequestForm(String requestFormPath) throws FileReadException {
+        try {
+            return IoUtility.readFile(requestFormPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new FileReadException("Ocurrió un error al intentar leer el formulario de Solicitud.", e);
+        }
     }
 
 }

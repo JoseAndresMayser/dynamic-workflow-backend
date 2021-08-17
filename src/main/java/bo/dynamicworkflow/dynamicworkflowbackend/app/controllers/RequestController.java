@@ -2,6 +2,7 @@ package bo.dynamicworkflow.dynamicworkflowbackend.app.controllers;
 
 import bo.dynamicworkflow.dynamicworkflowbackend.app.access.annotations.ResourceAction;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.DirectoryCreationException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.FileReadException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.SaveFileException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.departmentmember.DepartmentMemberNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.digitalcertificate.DigitalCertificateNotFoundException;
@@ -10,6 +11,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.input.InputExcep
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.process.InactiveProcessException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.process.ProcessException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.request.RequestException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.request.RequestNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.requeststage.RequestStageException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.stageanalyst.StageAnalystException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.user.UserNotFoundException;
@@ -17,9 +19,7 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.models.enums.ActionCode;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.RequestService;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.NewRequestRequestDto;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.requests.RequestActionRequestDto;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.GeneralResponse;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.RequestActionResponseDto;
-import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.RequestResponseDto;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.services.dto.responses.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -86,6 +86,22 @@ public class RequestController {
                 response,
                 "Solicitudes finalizadas del analista actual obtenidas exitosamente."
         );
+    }
+
+    @GetMapping("/{requestId}/form")
+    @ResourceAction(enablerActions = {ActionCode.REQUEST_EXECUTE_ACTION})
+    public GeneralResponse downloadRequestFormByRequestId(@PathVariable("requestId") Integer requestId)
+            throws RequestNotFoundException, FileReadException {
+        FileResponseDto response = requestService.downloadRequestFormByRequestId(requestId);
+        return new GeneralResponse(true, response, "Formulario de solicitud descargado exitosamente.");
+    }
+
+    @GetMapping("/{requestId}/detail")
+    @ResourceAction(enablerActions = {ActionCode.REQUEST_EXECUTE_ACTION})
+    public GeneralResponse getRequestDetailByRequestId(@PathVariable("requestId") Integer requestId)
+            throws RequestNotFoundException {
+        RequestDetailResponseDto response = requestService.getRequestDetailByRequestId(requestId);
+        return new GeneralResponse(true, response, "Detalle de la solicitud obtenido exitosamente.");
     }
 
 }
