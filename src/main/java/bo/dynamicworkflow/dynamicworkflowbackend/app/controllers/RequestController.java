@@ -89,7 +89,7 @@ public class RequestController {
     }
 
     @GetMapping("/{requestId}/form")
-    @ResourceAction(enablerActions = {ActionCode.REQUEST_EXECUTE_ACTION})
+    @ResourceAction(enablerActions = {ActionCode.REQUEST_EXECUTE_ACTION, ActionCode.REQUEST_GET_ALL_CURRENT_USER})
     public GeneralResponse downloadRequestFormByRequestId(@PathVariable("requestId") Integer requestId)
             throws RequestNotFoundException, FileReadException {
         FileResponseDto response = requestService.downloadRequestFormByRequestId(requestId);
