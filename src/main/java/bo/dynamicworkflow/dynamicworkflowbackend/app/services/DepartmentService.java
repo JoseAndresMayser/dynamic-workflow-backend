@@ -38,4 +38,6 @@ public interface DepartmentService {
 
     DepartmentResponseDto getRootDepartment() throws DepartmentNotFoundException;
 
+    DepartmentResponseDto getDepartmentById(Integer departmentId) throws DepartmentNotFoundException;
+
 }

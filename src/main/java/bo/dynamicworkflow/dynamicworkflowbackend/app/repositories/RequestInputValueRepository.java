@@ -4,6 +4,11 @@ import bo.dynamicworkflow.dynamicworkflowbackend.app.models.RequestInputValue;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface RequestInputValueRepository extends JpaRepository<RequestInputValue, Integer> {
+
+    List<RequestInputValue> getAllByRequestId(Integer requestId);
+
 }
