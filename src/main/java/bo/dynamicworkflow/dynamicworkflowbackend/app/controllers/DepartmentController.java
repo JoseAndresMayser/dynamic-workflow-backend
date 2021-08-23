@@ -97,4 +97,12 @@ public class DepartmentController {
         return new GeneralResponse(true, response, "Departamento raiz obtenido exitosamente.");
     }
 
+    @GetMapping("/{departmentId}")
+    @ResourceAction(enablerActions = {ActionCode.REQUEST_REGISTER})
+    public GeneralResponse getDepartmentById(@PathVariable("departmentId") Integer departmentId)
+            throws DepartmentNotFoundException {
+        DepartmentResponseDto response = departmentService.getDepartmentById(departmentId);
+        return new GeneralResponse(true, response, "Departamento obtenido exitosamente.");
+    }
+
 }

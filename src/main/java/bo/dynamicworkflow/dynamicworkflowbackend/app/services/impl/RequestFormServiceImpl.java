@@ -1,19 +1,27 @@
 package bo.dynamicworkflow.dynamicworkflowbackend.app.services.impl;
 
+import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.input.InputNotFoundException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.request.RequestFormGenerationException;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.exceptions.request.RequestFormSigningException;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.models.Input;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.Request;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.models.RequestInputValue;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.models.User;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.models.enums.InputTypeName;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.InputRepository;
+import bo.dynamicworkflow.dynamicworkflowbackend.app.repositories.RequestInputValueRepository;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.services.RequestFormService;
 import bo.dynamicworkflow.dynamicworkflowbackend.app.utilities.IoUtility;
+import com.lowagie.text.Chunk;
+import com.lowagie.text.Font;
 import fr.opensagres.xdocreport.converter.ConverterTypeTo;
 import fr.opensagres.xdocreport.converter.ConverterTypeVia;
 import fr.opensagres.xdocreport.converter.Options;
-import fr.opensagres.xdocreport.core.XDocReportException;
 import fr.opensagres.xdocreport.document.IXDocReport;
 import fr.opensagres.xdocreport.document.registry.XDocReportRegistry;
 import fr.opensagres.xdocreport.template.IContext;
 import fr.opensagres.xdocreport.template.TemplateEngineKind;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.security.*;
@@ -22,13 +30,26 @@ import java.io.*;
 
 import com.lowagie.text.pdf.*;
 
+import java.sql.Timestamp;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.List;
 
 @Service
 public class RequestFormServiceImpl implements RequestFormService {
 
+    private final RequestInputValueRepository requestInputValueRepository;
+    private final InputRepository inputRepository;
+
+    @Autowired
+    public RequestFormServiceImpl(RequestInputValueRepository requestInputValueRepository,
+                                  InputRepository inputRepository) {
+        this.requestInputValueRepository = requestInputValueRepository;
+        this.inputRepository = inputRepository;
+    }
+
     @Override
-    public byte[] generateRequestForm(String processName, Request request, User user)
+    public byte[] generateRequestForm(String processName, Request request, User requesting)
             throws RequestFormGenerationException {
         String template = "requests/request-form-template.docx";
         try {
@@ -44,8 +65,8 @@ public class RequestFormServiceImpl implements RequestFormService {
 
             IContext context = report.createContext();
             loadProcessName(context, processName);
+            loadRequestingData(context, requesting);
             loadRequestData(context, request);
-            loadUserData(context, user);
 
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             Options converterOptions = Options.getTo(ConverterTypeTo.PDF).via(ConverterTypeVia.XWPF);
@@ -53,7 +74,7 @@ public class RequestFormServiceImpl implements RequestFormService {
             byte[] data = outputStream.toByteArray();
             outputStream.close();
             return data;
-        } catch (IOException | XDocReportException e) {
+        } catch (Exception e) {
             throw new RequestFormGenerationException("Ocurrió un error al generar el formulario de solicitud.", e);
         }
     }
@@ -90,18 +111,49 @@ public class RequestFormServiceImpl implements RequestFormService {
         context.put("processName", processName);
     }
 
-    private void loadRequestData(IContext context, Request request) {
-        String shippingTimestamp =
-                new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(request.getShippingTimestamp());
-        context.put("requestShippingTimestamp", shippingTimestamp);
-        context.put("requestCode", request.getCode());
-    }
-
-    private void loadUserData(IContext context, User user) {
+    private void loadRequestingData(IContext context, User user) {
         context.put("requestingFullName", user.fullName());
         context.put("requestingEmail", user.getEmail());
         context.put("requestingPhone", user.getPhone());
         context.put("requestingIdentificationNumber", user.getIdentificationNumber());
+    }
+
+    private void loadRequestData(IContext context, Request request) throws ParseException, InputNotFoundException {
+        context.put("requestCode", request.getCode());
+        String shippingTimestamp =
+                new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(request.getShippingTimestamp());
+        context.put("requestShippingTimestamp", shippingTimestamp);
+
+        List<RequestInputValue> requestInputValues = requestInputValueRepository.getAllByRequestId(request.getId());
+        StringBuilder requestResponses = new StringBuilder();
+        int index = 1;
+        for (RequestInputValue requestInputValue : requestInputValues) {
+            Integer inputId = requestInputValue.getInputId();
+            Input input = inputRepository.findById(inputId).orElseThrow(() -> new InputNotFoundException(inputId));
+            String value = processInputValue(input.getInputType().getName(), requestInputValue.getValue());
+            String inputResponse = Integer.toString(index).concat(". ").concat(input.getName())
+                    .concat(":\n").concat("Respuesta: ").concat(value).concat("\n");
+            requestResponses.append(inputResponse);
+            index++;
+        }
+        context.put("requestResponses", requestResponses.toString());
+    }
+
+    private String processInputValue(InputTypeName inputTypeName, String value) throws ParseException {
+        switch (inputTypeName) {
+            case TEXT:
+            case SELECTION_BOX:
+            case DEPLOYABLE_LIST:
+            case MULTIPLE_CHOICE:
+                break;
+            case DATE:
+                SimpleDateFormat inputDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+                Timestamp timestamp = new Timestamp(inputDateFormat.parse(value).getTime());
+                return new SimpleDateFormat("dd-MM-yyyy").format(timestamp);
+            case UPLOAD_FILE:
+                return  "Archivo enviado";
+        }
+        return value;
     }
 
 }

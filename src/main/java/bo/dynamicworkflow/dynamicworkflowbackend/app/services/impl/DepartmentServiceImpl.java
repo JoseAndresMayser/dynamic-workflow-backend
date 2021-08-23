@@ -201,6 +201,13 @@ public class DepartmentServiceImpl implements DepartmentService {
         return departmentMapper.toDto(rootDepartment);
     }
 
+    @Override
+    public DepartmentResponseDto getDepartmentById(Integer departmentId) throws DepartmentNotFoundException {
+        Department department = getOptionalDepartmentById(departmentId)
+                .orElseThrow(() -> new DepartmentNotFoundException(departmentId));
+        return departmentMapper.toDto(department);
+    }
+
     private void verifyDepartmentNameForParent(String departmentName, Integer parentDepartmentId,
                                                String oldDepartmentName) throws DepartmentException {
         verifyIfDepartmentNameIsNull(departmentName);

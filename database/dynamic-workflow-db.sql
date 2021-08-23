@@ -350,57 +350,57 @@ VALUES ('REQUESTING_USER', 'Usuario solicitante');
 
 
 INSERT INTO actions(code, description)
-VALUES ('ACCESS_LOG_IN', 'Iniciar sesión');
+VALUES ('ACCESS_LOG_IN', 'Iniciar sesión'); /* 1 */
 INSERT INTO actions(code, description)
-VALUES ('ACCESS_PASSWORD_RESTORE', 'Restaurar contraseña');
+VALUES ('ACCESS_PASSWORD_RESTORE', 'Restaurar contraseña'); /* 2 */
 INSERT INTO actions(code, description)
-VALUES ('ACCESS_PASSWORD_UPDATE', 'Actualizar contraseña');
+VALUES ('ACCESS_PASSWORD_UPDATE', 'Actualizar contraseña'); /* 3 */
 
 INSERT INTO actions(code, description)
-VALUES ('ROLE_REGISTER', 'Registrar rol');
+VALUES ('ROLE_REGISTER', 'Registrar rol'); /* 4 */
 INSERT INTO actions(code, description)
-VALUES ('ROLE_UPDATE', 'Actualizar rol');
+VALUES ('ROLE_UPDATE', 'Actualizar rol'); /* 5 */
 INSERT INTO actions(code, description)
-VALUES ('ROLE_GET_ALL', 'Ver todos los roles');
+VALUES ('ROLE_GET_ALL', 'Ver todos los roles'); /* 6 */
 INSERT INTO actions(code, description)
-VALUES ('ROLE_DELETE', 'Eliminar rol');
+VALUES ('ROLE_DELETE', 'Eliminar rol'); /* 7 */
 
 INSERT INTO actions(code, description)
-VALUES ('USER_REGISTER_REQUESTING', 'Registrarse como solicitante');
+VALUES ('USER_REGISTER_REQUESTING', 'Registrarse como solicitante'); /* 8 */
 INSERT INTO actions(code, description)
-VALUES ('USER_REGISTER', 'Registrar usuario');
+VALUES ('USER_REGISTER', 'Registrar usuario'); /* 9 */
 INSERT INTO actions(code, description)
-VALUES ('USER_UPDATE', 'Actualizar usuario');
+VALUES ('USER_UPDATE', 'Actualizar usuario'); /* 10 */
 INSERT INTO actions(code, description)
-VALUES ('USER_CURRENT_UPDATE', 'Actualizar perfil');
+VALUES ('USER_CURRENT_UPDATE', 'Actualizar perfil'); /* 11 */
 INSERT INTO actions(code, description)
-VALUES ('USER_GET_ALL', 'Ver todos los usuarios');
+VALUES ('USER_GET_ALL', 'Ver todos los usuarios'); /* 12 */
 
 INSERT INTO actions(code, description)
-VALUES ('DEPARTMENT_REGISTER', 'Registrar departamento');
+VALUES ('DEPARTMENT_REGISTER', 'Registrar departamento'); /* 13 */
 INSERT INTO actions(code, description)
-VALUES ('DEPARTMENT_UPDATE', 'Actualizar departamento');
+VALUES ('DEPARTMENT_UPDATE', 'Actualizar departamento'); /* 14 */
 INSERT INTO actions(code, description)
-VALUES ('DEPARTMENT_UPDATE_MEMBERS', 'Actualizar miembros de departamento');
+VALUES ('DEPARTMENT_UPDATE_MEMBERS', 'Actualizar miembros de departamento'); /* 15 */
 INSERT INTO actions(code, description)
-VALUES ('DEPARTMENT_GET', 'Ver detalle de departamento');
+VALUES ('DEPARTMENT_GET', 'Ver detalle de departamento'); /* 16 */
 INSERT INTO actions(code, description)
-VALUES ('DEPARTMENT_GET_ALL', 'Ver todos los departamentos');
+VALUES ('DEPARTMENT_GET_ALL', 'Ver todos los departamentos'); /* 17 */
 
 INSERT INTO actions(code, description)
-VALUES ('PROCESS_CREATE', 'Crear proceso');
+VALUES ('PROCESS_CREATE', 'Crear proceso'); /* 18 */
 INSERT INTO actions(code, description)
-VALUES ('PROCESS_GET_ALL', 'Ver todos los procesos');
+VALUES ('PROCESS_GET_ALL', 'Ver todos los procesos'); /* 19 */
 
 INSERT INTO actions(code, description)
-VALUES ('REQUEST_REGISTER', 'Realizar nueva solicitud');
+VALUES ('REQUEST_REGISTER', 'Realizar nueva solicitud'); /* 20 */
 INSERT INTO actions(code, description)
-VALUES ('REQUEST_GET_ALL_CURRENT_USER', 'Ver mis solicitudes');
+VALUES ('REQUEST_GET_ALL_CURRENT_USER', 'Ver mis solicitudes'); /* 21 */
 INSERT INTO actions(code, description)
-VALUES ('REQUEST_EXECUTE_ACTION', 'Ejecutar acción sobre solicitud');
+VALUES ('REQUEST_EXECUTE_ACTION', 'Ejecutar acción sobre solicitud'); /* 22 */
 
 INSERT INTO actions(code, description)
-VALUES ('DEPARTMENT_MEMBER_UPLOAD_CERTIFICATE', 'Subir certificado digital');
+VALUES ('DEPARTMENT_MEMBER_UPLOAD_CERTIFICATE', 'Subir certificado digital'); /* 23 */
 
 
 /* ID de acciones sin autenticación: 1, 2, 11 */
@@ -521,8 +521,8 @@ VALUES ('TEXT', 'Campo de texto simple');
 INSERT INTO input_types(name, description)
 VALUES ('MULTIPLE_CHOICE', 'Casillas de opción múltiple');
 
-INSERT INTO input_types(name, description)
-VALUES ('SELECTION_BOX', 'Casillas de selección');
+-- INSERT INTO input_types(name, description)
+-- VALUES ('SELECTION_BOX', 'Casillas de selección');
 
 INSERT INTO input_types(name, description)
 VALUES ('DEPLOYABLE_LIST', 'Lista desplegable');

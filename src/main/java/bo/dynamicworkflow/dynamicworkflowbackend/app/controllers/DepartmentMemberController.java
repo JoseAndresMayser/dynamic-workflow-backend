@@ -39,7 +39,7 @@ public class DepartmentMemberController {
             DirectoryCreationException, SaveFileException, DeleteFileException {
         DigitalCertificateResponseDto response =
                 departmentMemberService.uploadDigitalCertificate(request, departmentMemberId);
-        return new GeneralResponse(true, response, "Certificado digital subido exitosamente.");
+        return new GeneralResponse(true, response, "Certificado digital cargado exitosamente.");
     }
 
     @GetMapping("/{departmentId}/all")
